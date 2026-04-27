@@ -1,7 +1,7 @@
 import { API_BASE, getHeaders } from './config';
 
-export async function fetchVenues() {
-	const res = await fetch(`${API_BASE}/holidaze/venues`, {
+export async function fetchVenues(page = 1, limit = 6) {
+	const res = await fetch(`${API_BASE}/holidaze/venues?page=${page}&limit=${limit}`, {
 		headers: getHeaders(),
 	});
 
