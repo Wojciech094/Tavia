@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchVenues } from '../api/venues';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 
@@ -110,9 +111,10 @@ export default function HomePage() {
 									const badgeText = index === 0 ? 'Trending' : index === 1 ? 'New' : '';
 
 									return (
-										<article
+										<Link
+											to={`/venues/${venue.id}`}
 											key={venue.id}
-											className='overflow-hidden rounded-2xl bg-white shadow-md'>
+											className='block overflow-hidden rounded-2xl bg-white shadow-md transition hover:-translate-y-1 hover:shadow-lg'>
 											<div className='relative h-56 bg-gray-300'>
 												{badgeText && (
 													<span className='absolute left-3 top-3 rounded-md bg-[#1f2a5a] px-3 py-1 text-xs font-semibold text-white'>
@@ -145,11 +147,11 @@ export default function HomePage() {
 													⭐ {venue.rating} · {venue.maxGuests} guests
 												</p>
 
-												<button className='mt-3 w-full rounded-lg bg-[#1f2a5a] py-3 font-medium text-white transition hover:opacity-90'>
-													Book Now
-												</button>
+												<div className='mt-3 w-full rounded-lg bg-[#1f2a5a] py-3 text-center font-medium text-white transition hover:opacity-90'>
+													View Details
+												</div>
 											</div>
-										</article>
+										</Link>
 									);
 								})}
 							</div>
