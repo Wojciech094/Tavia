@@ -2,6 +2,8 @@ import { Route, Routes } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import VenuesPage from './pages/VenuesPage';
 import VenueDetailsPage from './pages/VenueDetailsPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 
 function App() {
 	return (
@@ -17,6 +19,14 @@ function App() {
 			<Route
 				path='/venues/:id'
 				element={<VenueDetailsPage />}
+			/>
+			<Route
+				path='/login'
+				element={<LoginPage />}
+			/>
+			<Route
+				path='/register'
+				element={<RegisterPage />}
 			/>
 		</Routes>
 	);
