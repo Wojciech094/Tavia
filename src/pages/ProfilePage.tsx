@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import { fetchProfile, updateProfile } from '../api/profiles';
@@ -176,12 +177,18 @@ export default function ProfilePage() {
 							</p>
 
 							<div className='mt-5 space-y-3'>
-								<button className='w-full rounded-2xl bg-[#f2efff] px-4 py-4 text-left font-semibold transition hover:bg-[#e8e0ff]'>
-									View my bookings
-								</button>
-								<button className='w-full rounded-2xl bg-[#f2efff] px-4 py-4 text-left font-semibold transition hover:bg-[#e8e0ff]'>
-									Browse venues
-								</button>
+								<Link
+									to='/my-bookings'
+									className='flex items-center justify-between rounded-2xl bg-[#1f2a5a] px-5 py-4 font-semibold text-white transition hover:opacity-90'>
+									<span>My bookings</span>
+									<span>→</span>
+								</Link>
+								<Link
+									to='/venues'
+									className='flex items-center justify-between rounded-2xl border border-[#d9dbe8] px-5 py-4 font-semibold transition hover:bg-[#f5f5f7]'>
+									<span>Browse venues</span>
+									<span>→</span>
+								</Link>
 							</div>
 						</div>
 

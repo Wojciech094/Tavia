@@ -28,14 +28,17 @@ export default function Navbar() {
 
 	return (
 		<nav className='sticky top-0 z-50 flex items-center justify-between border-b border-white/10 bg-[#16204a]/80 px-6 py-4 text-white backdrop-blur-md md:px-10'>
-		
 			<Link
 				to='/'
-				className='text-xl font-bold tracking-wide transition hover:opacity-80'>
-				tavia
+				className='flex items-center gap-2'>
+				<img
+					src='/logoDark.svg'
+					alt='tavia logo'
+					className='h-8'
+				/>
+				<span className='text-xl font-bold text-white'>Tavia</span>
 			</Link>
 
-		
 			<div className='hidden gap-6 text-sm md:flex'>
 				<Link
 					to='/'
@@ -56,10 +59,8 @@ export default function Navbar() {
 				</a>
 			</div>
 
-			
 			{user ? (
 				<div className='relative'>
-					
 					<button
 						type='button'
 						onClick={() => setMenuOpen(prev => !prev)}
@@ -81,7 +82,6 @@ export default function Navbar() {
 						<span className='hidden text-sm font-medium sm:block'>{user.name}</span>
 					</button>
 
-					
 					{menuOpen && (
 						<div className='absolute right-0 mt-3 w-64 overflow-hidden rounded-2xl border border-[#d9dbe8] bg-white text-[#1f2a5a] shadow-2xl'>
 							<div className='border-b border-[#d9dbe8] p-4'>

@@ -5,7 +5,7 @@ import VenueDetailsPage from './pages/VenueDetailsPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
-
+import MyBookingsPage from './pages/MyBookingsPage';
 function App() {
 	return (
 		<Routes>
@@ -33,6 +33,8 @@ function App() {
 				path='/profile'
 				element={<ProfilePage />}
 			/>
+			<Route path="/my-bookings" element={<MyBookingsPage />}
+			 />
 		</Routes>
 	);
 }
