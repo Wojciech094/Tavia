@@ -6,6 +6,9 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import MyBookingsPage from './pages/MyBookingsPage';
+import ManagerDashboardPage from './pages/ManagerDashboardPage';
+import CreateVenuePage from './pages/CreateVenuePage';
+import EditVenuePage from './pages/EditVenuePage';
 function App() {
 	return (
 		<Routes>
@@ -33,8 +36,24 @@ function App() {
 				path='/profile'
 				element={<ProfilePage />}
 			/>
-			<Route path="/my-bookings" element={<MyBookingsPage />}
-			 />
+			<Route
+				path='/my-bookings'
+				element={<MyBookingsPage />}
+			/>
+
+			<Route
+				path='/manager'
+				element={<ManagerDashboardPage />}
+			/>
+
+			<Route
+				path='/manager/create'
+				element={<CreateVenuePage />}
+			/>
+			<Route
+				path='/manager/edit/:id'
+				element={<EditVenuePage />}
+			/>
 		</Routes>
 	);
 }

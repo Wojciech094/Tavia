@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchVenues } from '../api/venues';
-import { Link } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import VenueCard from '../components/venues/VenueCard';
 
 interface Venue {
 	id: string;
@@ -12,6 +13,12 @@ interface Venue {
 	price: number;
 	maxGuests: number;
 	rating: number;
+	meta?: {
+		wifi?: boolean;
+		parking?: boolean;
+		breakfast?: boolean;
+		pets?: boolean;
+	};
 	location?: {
 		city?: string;
 		country?: string;
@@ -22,6 +29,11 @@ export default function HomePage() {
 	const [venues, setVenues] = useState<Venue[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
+
+	const [where, setWhere] = useState('');
+	const [guests, setGuests] = useState('');
+
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		async function loadVenues() {
@@ -37,6 +49,15 @@ export default function HomePage() {
 
 		loadVenues();
 	}, []);
+
+	function handleSearch() {
+		const params = new URLSearchParams();
+
+		if (where.trim()) params.set('where', where.trim());
+		if (guests.trim()) params.set('guests', guests.trim());
+
+		navigate(`/venues?${params.toString()}`);
+	}
 
 	return (
 		<div className='min-h-screen bg-[#1f2a5a] text-white'>
@@ -60,6 +81,8 @@ export default function HomePage() {
 								<p className='mb-1 text-xs text-gray-500'>Where</p>
 								<input
 									type='text'
+									value={where}
+									onChange={event => setWhere(event.target.value)}
 									placeholder='Enter location'
 									className='w-full bg-transparent text-sm font-medium outline-none placeholder:text-gray-400'
 								/>
@@ -72,7 +95,9 @@ export default function HomePage() {
 								<input
 									type='text'
 									placeholder='Add dates'
-									className='w-full bg-transparent text-sm font-medium outline-none placeholder:text-gray-400'
+									readOnly
+									title='Date picker coming soon'
+									className='w-full cursor-not-allowed bg-transparent text-sm font-medium outline-none placeholder:text-gray-400'
 								/>
 							</div>
 
@@ -81,13 +106,19 @@ export default function HomePage() {
 							<div className='flex-1 rounded-2xl px-4 py-3'>
 								<p className='mb-1 text-xs text-gray-500'>Who</p>
 								<input
-									type='text'
+									type='number'
+									min='1'
+									value={guests}
+									onChange={event => setGuests(event.target.value)}
 									placeholder='Add guests'
 									className='w-full bg-transparent text-sm font-medium outline-none placeholder:text-gray-400'
 								/>
 							</div>
 
-							<button className='rounded-full bg-[#1f2a5a] px-8 py-4 font-medium text-white transition hover:opacity-90'>
+							<button
+								type='button'
+								onClick={handleSearch}
+								className='rounded-full bg-[#1f2a5a] px-8 py-4 font-medium text-white transition hover:opacity-90'>
 								Search
 							</button>
 						</div>
@@ -97,61 +128,23 @@ export default function HomePage() {
 				<section className='bg-[#f5f5f7] px-6 py-14 text-black md:px-10'>
 					<div className='mx-auto max-w-6xl'>
 						<h2 className='text-3xl font-bold text-[#1f2a5a]'>Featured Venues</h2>
-						<p className='mt-1 mb-8 text-gray-600'>Handpicked places you will love</p>
+						<p className='mb-8 mt-1 text-gray-600'>Handpicked places you will love</p>
 
 						{loading && <p className='text-gray-600'>Loading venues...</p>}
 
 						{error && <p className='text-red-600'>{error}</p>}
 
 						{!loading && !error && (
-							<div className='grid gap-6 md:grid-cols-2 xl:grid-cols-3'>
+							<div className='grid gap-8 md:grid-cols-2 xl:grid-cols-3'>
 								{venues.slice(0, 6).map((venue, index) => {
-									const image = venue.media?.[0]?.url;
-									const imageAlt = venue.media?.[0]?.alt || venue.name;
-									const badgeText = index === 0 ? 'Trending' : index === 1 ? 'New' : '';
+									const badge = index === 0 ? 'Trending' : index === 1 ? 'New' : '';
 
 									return (
-										<Link
-											to={`/venues/${venue.id}`}
+										<VenueCard
 											key={venue.id}
-											className='block overflow-hidden rounded-2xl bg-white shadow-md transition hover:-translate-y-1 hover:shadow-lg'>
-											<div className='relative h-56 bg-gray-300'>
-												{badgeText && (
-													<span className='absolute left-3 top-3 rounded-md bg-[#1f2a5a] px-3 py-1 text-xs font-semibold text-white'>
-														{badgeText}
-													</span>
-												)}
-
-												{image ? (
-													<img
-														src={image}
-														alt={imageAlt}
-														className='h-full w-full object-cover'
-													/>
-												) : null}
-											</div>
-
-											<div className='space-y-2 p-4'>
-												<div className='flex items-start justify-between gap-4'>
-													<h3 className='text-lg font-bold text-[#1f2a5a]'>{venue.name}</h3>
-
-													<p className='whitespace-nowrap font-bold text-[#1f2a5a]'>NOK {venue.price} / night</p>
-												</div>
-
-												<p className='text-sm text-gray-500'>
-													{venue.location?.city || 'Unknown city'}
-													{venue.location?.country ? `, ${venue.location.country}` : ''}
-												</p>
-
-												<p className='text-sm text-gray-500'>
-													⭐ {venue.rating} · {venue.maxGuests} guests
-												</p>
-
-												<div className='mt-3 w-full rounded-lg bg-[#1f2a5a] py-3 text-center font-medium text-white transition hover:opacity-90'>
-													View Details
-												</div>
-											</div>
-										</Link>
+											venue={venue}
+											badge={badge}
+										/>
 									);
 								})}
 							</div>

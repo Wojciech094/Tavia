@@ -200,12 +200,16 @@ export default function ProfilePage() {
 								</p>
 
 								<div className='mt-5 space-y-3'>
-									<button className='w-full rounded-2xl bg-[#f2efff] px-4 py-4 text-left font-semibold transition hover:bg-[#e8e0ff]'>
+									<Link
+										to='/manager'
+										className='block w-full rounded-2xl bg-[#f2efff] px-4 py-4 text-left font-semibold transition hover:bg-[#e8e0ff]'>
 										Manager dashboard
-									</button>
-									<button className='w-full rounded-2xl bg-[#f2efff] px-4 py-4 text-left font-semibold transition hover:bg-[#e8e0ff]'>
-										Create new venue
-									</button>
+									</Link>
+									<Link
+										to='/manager/create'
+										className='block w-full rounded-2xl bg-[#f2efff] px-4 py-4 text-left font-semibold transition hover:bg-[#e8e0ff]'>
+										Create venue
+									</Link>
 								</div>
 							</div>
 						)}

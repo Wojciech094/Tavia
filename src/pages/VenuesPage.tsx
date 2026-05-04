@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { fetchVenues } from '../api/venues';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import VenueCard from '../components/venues/VenueCard';
 
 interface Venue {
 	id: string;
@@ -24,12 +25,16 @@ interface Venue {
 	};
 }
 
+const DEFAULT_LIMIT = 6;
+const SEARCH_LIMIT = 100;
+
 export default function VenuesPage() {
 	const [venues, setVenues] = useState<Venue[]>([]);
 	const [page, setPage] = useState(1);
 	const [loading, setLoading] = useState(true);
 	const [loadingMore, setLoadingMore] = useState(false);
 	const [hasMore, setHasMore] = useState(true);
+	const [globalSearchLoading, setGlobalSearchLoading] = useState(false);
 
 	const [searchParams, setSearchParams] = useSearchParams();
 
@@ -41,10 +46,14 @@ export default function VenuesPage() {
 	const minRating = searchParams.get('minRating') || '';
 	const sort = searchParams.get('sort') || 'recommended';
 
-	const [localWhere, setLocalWhere] = useState(where);
-	const [localGuests, setLocalGuests] = useState(guests);
+	const [localWhere, setLocalWhere] = useState(() => where);
+	const [localGuests, setLocalGuests] = useState(() => guests);
 
 	const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+	const isFiltering = Boolean(
+		where || guests || minPrice || maxPrice || amenity || minRating || sort !== 'recommended',
+	);
 
 	function updateParam(key: string, value: string) {
 		const nextParams = new URLSearchParams(searchParams);
@@ -87,7 +96,7 @@ export default function VenuesPage() {
 
 		const filtered = venues.filter(venue => {
 			const venueName = venue.name.toLowerCase();
-			const venueDescription = venue.description.toLowerCase();
+			const venueDescription = venue.description?.toLowerCase() || '';
 			const venueCity = venue.location?.city?.toLowerCase() || '';
 			const venueCountry = venue.location?.country?.toLowerCase() || '';
 
@@ -118,14 +127,102 @@ export default function VenuesPage() {
 		});
 	}, [venues, where, guests, minPrice, maxPrice, minRating, amenity, sort]);
 
+	useEffect(() => {
+		if (isFiltering) return;
+
+		let cancelled = false;
+
+		async function loadInitialVenues() {
+			try {
+				setLoading(true);
+				setLoadingMore(false);
+				setGlobalSearchLoading(false);
+
+				const data = await fetchVenues(1, DEFAULT_LIMIT);
+
+				if (cancelled) return;
+
+				setVenues(data.data);
+				setHasMore(!data.meta.isLastPage);
+				setPage(1);
+			} catch {
+				if (!cancelled) {
+					setVenues([]);
+					setHasMore(false);
+				}
+			} finally {
+				if (!cancelled) {
+					setLoading(false);
+				}
+			}
+		}
+
+		loadInitialVenues();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [isFiltering]);
+
+	useEffect(() => {
+		if (!isFiltering) return;
+
+		let cancelled = false;
+
+		async function loadAllVenuesForFilters() {
+			try {
+				setLoading(true);
+				setLoadingMore(false);
+				setGlobalSearchLoading(true);
+				setHasMore(false);
+
+				let currentPage = 1;
+				let allVenues: Venue[] = [];
+				let isLastPage = false;
+
+				while (!isLastPage) {
+					const data = await fetchVenues(currentPage, SEARCH_LIMIT);
+
+					if (cancelled) return;
+
+					allVenues = [...allVenues, ...data.data];
+					isLastPage = data.meta.isLastPage;
+					currentPage += 1;
+				}
+
+				if (cancelled) return;
+
+				setVenues(allVenues);
+				setPage(1);
+				setHasMore(false);
+			} catch {
+				if (!cancelled) {
+					setVenues([]);
+					setHasMore(false);
+				}
+			} finally {
+				if (!cancelled) {
+					setLoading(false);
+					setGlobalSearchLoading(false);
+				}
+			}
+		}
+
+		loadAllVenuesForFilters();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [isFiltering, where, guests, minPrice, maxPrice, amenity, minRating, sort]);
+
 	const loadMoreVenues = useCallback(async () => {
-		if (loadingMore || !hasMore) return;
+		if (loadingMore || !hasMore || isFiltering) return;
 
 		try {
 			setLoadingMore(true);
 
 			const nextPage = page + 1;
-			const data = await fetchVenues(nextPage, 6);
+			const data = await fetchVenues(nextPage, DEFAULT_LIMIT);
 
 			setVenues(currentVenues => [...currentVenues, ...data.data]);
 			setHasMore(!data.meta.isLastPage);
@@ -135,32 +232,12 @@ export default function VenuesPage() {
 		} finally {
 			setLoadingMore(false);
 		}
-	}, [page, loadingMore, hasMore]);
-
-	useEffect(() => {
-		async function initVenues() {
-			try {
-				setLoading(true);
-
-				const data = await fetchVenues(1, 6);
-
-				setVenues(data.data);
-				setHasMore(!data.meta.isLastPage);
-				setPage(1);
-			} catch {
-				setHasMore(false);
-			} finally {
-				setLoading(false);
-			}
-		}
-
-		initVenues();
-	}, []);
+	}, [page, loadingMore, hasMore, isFiltering]);
 
 	useEffect(() => {
 		const target = loadMoreRef.current;
 
-		if (!target || loading || loadingMore || !hasMore) return;
+		if (!target || loading || loadingMore || !hasMore || isFiltering) return;
 
 		const observer = new IntersectionObserver(
 			entries => {
@@ -174,7 +251,7 @@ export default function VenuesPage() {
 		observer.observe(target);
 
 		return () => observer.disconnect();
-	}, [loading, loadingMore, hasMore, loadMoreVenues]);
+	}, [loading, loadingMore, hasMore, loadMoreVenues, isFiltering]);
 
 	return (
 		<div className='min-h-screen bg-[#f5f5f7] text-[#1f2a5a]'>
@@ -283,16 +360,23 @@ export default function VenuesPage() {
 						</select>
 					</div>
 
-					<div className='flex items-center justify-between text-sm text-gray-600'>
+					<div className='flex flex-col gap-1 text-sm text-gray-600 md:flex-row md:items-center md:justify-between'>
 						<span>{filteredVenues.length} venues found</span>
-						<span>Sort: {sort}</span>
+
+						{isFiltering ? (
+							<span>{globalSearchLoading ? 'Searching all venues...' : 'Showing results from all API pages'}</span>
+						) : (
+							<span>Scroll to load more venues</span>
+						)}
 					</div>
 				</div>
 			</div>
 
 			<main className='mx-auto max-w-6xl px-6 py-10 md:px-10'>
 				{loading ? (
-					<p>Loading venues...</p>
+					<div className='grid min-h-180 place-items-center rounded-3xl bg-white shadow-sm'>
+						<p className='text-sm text-[#1f2a5a]/60'>{isFiltering ? 'Searching all venues...' : 'Loading venues...'}</p>
+					</div>
 				) : (
 					<>
 						{filteredVenues.length === 0 ? (
@@ -307,61 +391,22 @@ export default function VenuesPage() {
 								</button>
 							</div>
 						) : (
-							<div className='grid min-h-180 gap-6 md:grid-cols-2 xl:grid-cols-3'>
+							<div className='grid min-h-180 gap-8 md:grid-cols-2 xl:grid-cols-3'>
 								{filteredVenues.map((venue, index) => {
-									const image = venue.media?.[0]?.url;
-									const imageAlt = venue.media?.[0]?.alt || venue.name;
 									const badge = index === 0 ? 'Trending' : index === 1 ? 'New' : index === 5 ? 'Popular' : '';
 
 									return (
-										<Link
-											to={`/venues/${venue.id}`}
+										<VenueCard
 											key={venue.id}
-											className='block overflow-hidden rounded-2xl bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md'>
-											<div className='relative h-56 bg-gray-300'>
-												{badge && (
-													<span className='absolute left-3 top-3 z-10 rounded-md bg-[#1f2a5a] px-3 py-1 text-xs font-semibold text-white'>
-														{badge}
-													</span>
-												)}
-
-												{image ? (
-													<img
-														src={image}
-														alt={imageAlt}
-														className='h-full w-full object-cover'
-													/>
-												) : (
-													<div className='flex h-full items-center justify-center text-sm text-gray-500'>No image</div>
-												)}
-											</div>
-
-											<div className='space-y-2 p-4'>
-												<div className='flex items-start justify-between gap-4'>
-													<h3 className='font-semibold'>{venue.name}</h3>
-													<span className='whitespace-nowrap font-bold'>NOK {venue.price}</span>
-												</div>
-
-												<p className='text-sm text-gray-500'>
-													{venue.location?.city || 'Unknown'}
-													{venue.location?.country ? `, ${venue.location.country}` : ''}
-												</p>
-
-												<p className='text-sm text-gray-500'>
-													⭐ {venue.rating} · {venue.maxGuests} guests
-												</p>
-
-												<div className='mt-3 w-full rounded-lg bg-[#1f2a5a] py-2 text-center font-medium text-white transition hover:opacity-90'>
-													View Details
-												</div>
-											</div>
-										</Link>
+											venue={venue}
+											badge={badge}
+										/>
 									);
 								})}
 							</div>
 						)}
 
-						{hasMore && (
+						{hasMore && !isFiltering && (
 							<div
 								ref={loadMoreRef}
 								className='mt-10 flex justify-center'>
@@ -369,7 +414,7 @@ export default function VenuesPage() {
 							</div>
 						)}
 
-						{!hasMore && venues.length > 0 && (
+						{!hasMore && venues.length > 0 && !isFiltering && (
 							<p className='mt-10 text-center text-sm text-[#1f2a5a]/60'>You have reached the end.</p>
 						)}
 					</>

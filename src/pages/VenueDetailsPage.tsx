@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { fetchVenueById } from '../api/venues';
+import { createBooking } from '../api/bookings';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 
@@ -40,6 +41,11 @@ export default function VenueDetailsPage() {
 	const [dateTo, setDateTo] = useState('');
 	const [guests, setGuests] = useState(1);
 
+	const [bookingLoading, setBookingLoading] = useState(false);
+	const [bookingError, setBookingError] = useState('');
+	const [bookingSuccess, setBookingSuccess] = useState('');
+	const [acceptBookingTerms, setAcceptBookingTerms] = useState(false);
+
 	useEffect(() => {
 		async function loadVenue() {
 			try {
@@ -57,6 +63,35 @@ export default function VenueDetailsPage() {
 
 		loadVenue();
 	}, [id]);
+
+	async function handleBooking() {
+		if (!venue) return;
+
+		if (!acceptBookingTerms) {
+			setBookingError('You must accept the booking terms.');
+			return;
+		}
+
+		try {
+			setBookingLoading(true);
+			setBookingError('');
+			setBookingSuccess('');
+
+			await createBooking({
+				dateFrom,
+				dateTo,
+				guests,
+				venueId: venue.id,
+			});
+
+			setBookingSuccess('Booking successful! 🎉');
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Booking failed';
+			setBookingError(message);
+		} finally {
+			setBookingLoading(false);
+		}
+	}
 
 	if (loading) {
 		return (
@@ -164,8 +199,7 @@ export default function VenueDetailsPage() {
 								{venue.meta?.parking && <Amenity label='Parking' />}
 								{venue.meta?.breakfast && <Amenity label='Breakfast' />}
 								{venue.meta?.pets && <Amenity label='Pet Friendly' />}
-								<Amenity label='Kitchen' />
-								<Amenity label='Hot Tub' />
+								
 							</div>
 						</div>
 					</div>
@@ -239,10 +273,33 @@ export default function VenueDetailsPage() {
 						<p className='mt-3 text-sm text-red-600'>This venue allows maximum {venue.maxGuests} guests.</p>
 					)}
 
+					<label className='mt-4 flex gap-3 rounded-xl bg-[#f2efff] p-3 text-sm text-[#1f2a5a]/75'>
+						<input
+							type='checkbox'
+							checked={acceptBookingTerms}
+							onChange={e => setAcceptBookingTerms(e.target.checked)}
+							className='mt-1'
+						/>
+						<span>I agree to the booking terms. Bookings cannot be cancelled within 24 hours of check-in.</span>
+					</label>
+
+					{bookingError && <p className='mt-3 text-sm text-red-600'>{bookingError}</p>}
+					{bookingSuccess && <p className='mt-3 text-sm text-green-600'>{bookingSuccess}</p>}
+
 					<button
-						disabled={!dateFrom || !dateTo || nights <= 0 || guests < 1 || guests > venue.maxGuests}
+						type='button'
+						onClick={handleBooking}
+						disabled={
+							bookingLoading ||
+							!dateFrom ||
+							!dateTo ||
+							nights <= 0 ||
+							guests < 1 ||
+							guests > venue.maxGuests ||
+							!acceptBookingTerms
+						}
 						className='mt-5 w-full rounded-lg bg-[#1f2a5a] py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50'>
-						Reserve Now
+						{bookingLoading ? 'Booking...' : 'Reserve Now'}
 					</button>
 
 					<p className='mt-3 text-center text-xs text-[#1f2a5a]/50'>You will not be charged yet</p>
@@ -258,4 +315,5 @@ function Amenity({ label }: { label: string }) {
 	return (
 		<span className='rounded-full border border-[#d7c6ff] bg-[#f2efff] px-3 py-1 text-xs text-[#1f2a5a]'>{label}</span>
 	);
+
 }
