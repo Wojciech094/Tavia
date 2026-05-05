@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getUser, logout } from '../../utils/auth';
 
@@ -15,12 +15,27 @@ interface User {
 export default function Navbar() {
 	const navigate = useNavigate();
 
-	
 	const [user, setUser] = useState<User | null>(() => getUser());
 	const [menuOpen, setMenuOpen] = useState(false);
 
+	useEffect(() => {
+		function syncUserFromStorage() {
+			setUser(getUser());
+		}
+
+		window.addEventListener('storage', syncUserFromStorage);
+		window.addEventListener('auth-change', syncUserFromStorage);
+
+		return () => {
+			window.removeEventListener('storage', syncUserFromStorage);
+			window.removeEventListener('auth-change', syncUserFromStorage);
+		};
+	}, []);
+
 	function handleLogout() {
 		logout();
+		window.dispatchEvent(new Event('auth-change'));
+
 		setUser(null);
 		setMenuOpen(false);
 		navigate('/');

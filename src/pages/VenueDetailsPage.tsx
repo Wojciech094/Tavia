@@ -1,9 +1,21 @@
-import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { DayPicker, type DateRange } from 'react-day-picker';
+import 'react-day-picker/style.css';
+import { differenceInCalendarDays, eachDayOfInterval, format, isBefore, parseISO, startOfDay, subDays } from 'date-fns';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { fetchVenueById } from '../api/venues';
-import { createBooking } from '../api/bookings';
-import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import Navbar from '../components/layout/Navbar';
+import Toast from '../components/ui/Toast';
+import { PageSkeleton } from '../components/ui/Skeleton';
+import { MapPin, Star, Users } from 'lucide-react';
+
+interface Booking {
+	id: string;
+	dateFrom: string;
+	dateTo: string;
+	guests: number;
+}
 
 interface Venue {
 	id: string;
@@ -13,6 +25,7 @@ interface Venue {
 	price: number;
 	maxGuests: number;
 	rating: number;
+	bookings?: Booking[];
 	location?: {
 		city?: string;
 		country?: string;
@@ -26,78 +39,194 @@ interface Venue {
 	};
 	owner?: {
 		name: string;
+		email?: string;
 	};
+}
+
+interface StoredUser {
+	name?: string;
+	email?: string;
+	venueManager?: boolean;
+}
+
+function getStoredUser(): StoredUser | null {
+	try {
+		const storedUser = localStorage.getItem('user');
+		return storedUser ? JSON.parse(storedUser) : null;
+	} catch {
+		return null;
+	}
+}
+
+function toApiDate(date?: Date) {
+	return date ? format(date, 'yyyy-MM-dd') : '';
+}
+
+function toDisplayDate(date?: Date) {
+	return date ? format(date, 'dd MMM yyyy') : 'Select date';
+}
+
+function getBookedDays(bookings: Booking[]) {
+	return bookings.flatMap(booking => {
+		const start = startOfDay(parseISO(booking.dateFrom));
+		const end = startOfDay(parseISO(booking.dateTo));
+		const lastBookedNight = subDays(end, 1);
+
+		if (isBefore(lastBookedNight, start)) return [];
+
+		return eachDayOfInterval({
+			start,
+			end: lastBookedNight,
+		});
+	});
+}
+
+function hasDateConflict(range: DateRange | undefined, bookings: Booking[]) {
+	if (!range?.from || !range?.to) return false;
+
+	const selectedFrom = startOfDay(range.from).getTime();
+	const selectedTo = startOfDay(range.to).getTime();
+
+	return bookings.some(booking => {
+		const bookedFrom = startOfDay(parseISO(booking.dateFrom)).getTime();
+		const bookedTo = startOfDay(parseISO(booking.dateTo)).getTime();
+
+		return selectedFrom < bookedTo && selectedTo > bookedFrom;
+	});
 }
 
 export default function VenueDetailsPage() {
 	const { id } = useParams();
+	const navigate = useNavigate();
 
 	const [venue, setVenue] = useState<Venue | null>(null);
 	const [selectedImage, setSelectedImage] = useState('');
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState('');
-
-	const [dateFrom, setDateFrom] = useState('');
-	const [dateTo, setDateTo] = useState('');
+	const [selectedRange, setSelectedRange] = useState<DateRange | undefined>();
 	const [guests, setGuests] = useState(1);
 
-	const [bookingLoading, setBookingLoading] = useState(false);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState('');
 	const [bookingError, setBookingError] = useState('');
 	const [bookingSuccess, setBookingSuccess] = useState('');
 	const [acceptBookingTerms, setAcceptBookingTerms] = useState(false);
+	const [isContinuing, setIsContinuing] = useState(false);
+
+	const currentUser = getStoredUser();
+useEffect(() => {
+	window.scrollTo(0, 0);
+}, [id]);
 
 	useEffect(() => {
+		let isMounted = true;
+
 		async function loadVenue() {
 			try {
 				if (!id) return;
 
+				setLoading(true);
+				setError('');
+
 				const data = await fetchVenueById(id);
+
+				if (!isMounted) return;
+
 				setVenue(data.data);
 				setSelectedImage(data.data.media?.[0]?.url || '');
 			} catch {
-				setError('Failed to load venue.');
+				if (isMounted) {
+					setError('Failed to load venue. Please try again.');
+				}
 			} finally {
-				setLoading(false);
+				if (isMounted) {
+					setLoading(false);
+				}
 			}
 		}
 
-		loadVenue();
+		void loadVenue();
+
+		return () => {
+			isMounted = false;
+		};
 	}, [id]);
 
-	async function handleBooking() {
-		if (!venue) return;
+	const bookings = useMemo(() => venue?.bookings ?? [], [venue?.bookings]);
+	const bookedDays = useMemo(() => getBookedDays(bookings), [bookings]);
+
+	const isOwner = Boolean(venue?.owner?.name && currentUser?.name && venue.owner.name === currentUser.name);
+
+	const nights =
+		selectedRange?.from && selectedRange?.to ? differenceInCalendarDays(selectedRange.to, selectedRange.from) : 0;
+
+	const dateFrom = toApiDate(selectedRange?.from);
+	const dateTo = toApiDate(selectedRange?.to);
+	const dateConflict = hasDateConflict(selectedRange, bookings);
+
+	const selectedDatesAreAvailable = Boolean(
+		selectedRange?.from && selectedRange?.to && nights > 0 && !dateConflict && !isOwner,
+	);
+
+	const cleaningFee = 350;
+	const serviceFee = 220;
+	const subtotal = venue && nights > 0 ? nights * venue.price : 0;
+	const total = nights > 0 ? subtotal + cleaningFee + serviceFee : 0;
+
+	function handleBooking() {
+		if (!venue || isContinuing) return;
+
+		setBookingError('');
+		setBookingSuccess('');
+
+		if (isOwner) {
+			setBookingError('You manage this venue, so you cannot book it yourself.');
+			return;
+		}
+
+		if (!selectedRange?.from || !selectedRange?.to) {
+			setBookingError('Please select your check-in and check-out dates.');
+			return;
+		}
+
+		if (nights <= 0) {
+			setBookingError('Check-out date must be after check-in date.');
+			return;
+		}
+
+		if (dateConflict) {
+			setBookingError('Selected dates are already booked. Please choose another period.');
+			return;
+		}
+
+		if (guests < 1 || guests > venue.maxGuests) {
+			setBookingError(`This venue allows between 1 and ${venue.maxGuests} guests.`);
+			return;
+		}
 
 		if (!acceptBookingTerms) {
 			setBookingError('You must accept the booking terms.');
 			return;
 		}
 
-		try {
-			setBookingLoading(true);
-			setBookingError('');
-			setBookingSuccess('');
+		setBookingSuccess('Dates selected successfully. Taking you to checkout...');
+		setIsContinuing(true);
 
-			await createBooking({
-				dateFrom,
-				dateTo,
-				guests,
-				venueId: venue.id,
+		window.setTimeout(() => {
+			navigate(`/checkout/${venue.id}`, {
+				state: {
+					dateFrom,
+					dateTo,
+					guests,
+				},
 			});
-
-			setBookingSuccess('Booking successful! 🎉');
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Booking failed';
-			setBookingError(message);
-		} finally {
-			setBookingLoading(false);
-		}
+		}, 1500);
 	}
 
 	if (loading) {
 		return (
 			<div className='min-h-screen bg-[#f5f5f7] text-[#1f2a5a]'>
 				<Navbar />
-				<main className='mx-auto max-w-6xl px-6 py-10'>Loading venue...</main>
+				<PageSkeleton />
+				<Footer />
 			</div>
 		);
 	}
@@ -106,14 +235,27 @@ export default function VenueDetailsPage() {
 		return (
 			<div className='min-h-screen bg-[#f5f5f7] text-[#1f2a5a]'>
 				<Navbar />
+
+				<Toast
+					type='error'
+					message={error || 'Venue not found.'}
+					onClose={() => setError('')}
+				/>
+
 				<main className='mx-auto max-w-6xl px-6 py-10'>
-					<p className='text-red-600'>{error || 'Venue not found.'}</p>
-					<Link
-						to='/venues'
-						className='mt-4 inline-block underline'>
-						Back to venues
-					</Link>
+					<div className='rounded-3xl border border-red-100 bg-white p-8 shadow-sm'>
+						<h1 className='text-2xl font-bold text-red-600'>Something went wrong</h1>
+						<p className='mt-2 text-[#1f2a5a]/70'>{error || 'Venue not found.'}</p>
+
+						<Link
+							to='/venues'
+							className='mt-5 inline-block rounded-xl bg-[#1f2a5a] px-5 py-3 font-semibold text-white'>
+							Back to venues
+						</Link>
+					</div>
 				</main>
+
+				<Footer />
 			</div>
 		);
 	}
@@ -123,23 +265,23 @@ export default function VenueDetailsPage() {
 		venue.location?.country ? `, ${venue.location.country}` : ''
 	}`;
 
-	const dateFromTime = dateFrom ? new Date(dateFrom).getTime() : 0;
-	const dateToTime = dateTo ? new Date(dateTo).getTime() : 0;
-	const nights =
-		dateFromTime && dateToTime && dateToTime > dateFromTime
-			? Math.ceil((dateToTime - dateFromTime) / (1000 * 60 * 60 * 24))
-			: 0;
-
-	const cleaningFee = 350;
-	const serviceFee = 220;
-	const subtotal = nights * venue.price;
-	const total = nights > 0 ? subtotal + cleaningFee + serviceFee : 0;
-
 	return (
 		<div className='min-h-screen bg-[#f5f5f7] text-[#1f2a5a]'>
 			<Navbar />
 
-			<main className='mx-auto grid max-w-6xl gap-8 px-6 py-8 md:grid-cols-[1fr_330px] md:px-10'>
+			<Toast
+				type='error'
+				message={bookingError}
+				onClose={() => setBookingError('')}
+			/>
+
+			<Toast
+				type='success'
+				message={bookingSuccess}
+				onClose={() => setBookingSuccess('')}
+			/>
+
+			<main className='mx-auto grid max-w-6xl gap-8 px-6 py-8 md:grid-cols-[1fr_380px] md:px-10'>
 				<section>
 					<Link
 						to='/venues'
@@ -147,7 +289,7 @@ export default function VenueDetailsPage() {
 						← Back to venues
 					</Link>
 
-					<div className='h-105 overflow-hidden rounded-2xl bg-gray-300'>
+					<div className='h-105 overflow-hidden rounded-2xl bg-gray-300 shadow-sm'>
 						{selectedImage ? (
 							<img
 								src={selectedImage}
@@ -182,9 +324,22 @@ export default function VenueDetailsPage() {
 					<div className='mt-6 max-w-3xl'>
 						<h1 className='text-3xl font-bold'>{venue.name}</h1>
 
-						<p className='mt-2 text-sm text-[#1f2a5a]/65'>
-							📍 {locationText} · ⭐ {venue.rating} · {venue.maxGuests} guests
-						</p>
+						<div className='mt-2 flex flex-wrap items-center gap-3 text-sm text-[#1f2a5a]/65'>
+							<span className='inline-flex items-center gap-1.5'>
+								<MapPin className='h-4 w-4' />
+								{locationText}
+							</span>
+
+							<span className='inline-flex items-center gap-1.5'>
+								<Star className='h-4 w-4 fill-amber-400 text-amber-400' />
+								{venue.rating}
+							</span>
+
+							<span className='inline-flex items-center gap-1.5'>
+								<Users className='h-4 w-4' />
+								{venue.maxGuests} guests
+							</span>
+						</div>
 
 						<div className='mt-5 border-t border-[#d9dbe8] pt-5'>
 							<h2 className='font-bold'>About this place</h2>
@@ -199,7 +354,21 @@ export default function VenueDetailsPage() {
 								{venue.meta?.parking && <Amenity label='Parking' />}
 								{venue.meta?.breakfast && <Amenity label='Breakfast' />}
 								{venue.meta?.pets && <Amenity label='Pet Friendly' />}
-								
+
+								{!venue.meta?.wifi && !venue.meta?.parking && !venue.meta?.breakfast && !venue.meta?.pets && (
+									<p className='text-sm text-[#1f2a5a]/60'>No amenities listed.</p>
+								)}
+							</div>
+						</div>
+
+						<div className='mt-8 rounded-2xl border border-[#d9dbe8] bg-white p-5 shadow-sm'>
+							<h2 className='font-bold'>Availability</h2>
+							<p className='mt-1 text-sm text-[#1f2a5a]/60'>Booked dates are marked in red and cannot be selected.</p>
+
+							<div className='mt-4 flex flex-wrap gap-3 text-xs'>
+								<span className='rounded-full bg-[#f2efff] px-3 py-1'>Selected stay</span>
+								<span className='rounded-full bg-red-50 px-3 py-1 text-red-600'>Booked</span>
+								<span className='rounded-full bg-green-50 px-3 py-1 text-green-700'>Available</span>
 							</div>
 						</div>
 					</div>
@@ -211,56 +380,117 @@ export default function VenueDetailsPage() {
 						<p className='text-xs text-[#1f2a5a]/60'>per night · Free cancellation</p>
 					</div>
 
-					<div className='mt-4 border-t border-[#d9dbe8] pt-4'>
-						<div className='grid grid-cols-2 gap-2'>
-							<div className='rounded-lg border border-[#d7c6ff] bg-[#f2efff] px-3 py-2'>
-								<label className='text-xs text-[#1f2a5a]/60'>Check-in</label>
-								<input
-									type='date'
-									value={dateFrom}
-									onChange={e => setDateFrom(e.target.value)}
-									className='w-full bg-transparent text-sm font-semibold outline-none'
-								/>
-							</div>
+					{isOwner && (
+						<div className='mt-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-700'>
+							You manage this venue, so you cannot book it yourself.
+						</div>
+					)}
 
-							<div className='rounded-lg border border-[#d7c6ff] bg-[#f2efff] px-3 py-2'>
-								<label className='text-xs text-[#1f2a5a]/60'>Check-out</label>
-								<input
-									type='date'
-									value={dateTo}
-									onChange={e => setDateTo(e.target.value)}
-									className='w-full bg-transparent text-sm font-semibold outline-none'
-								/>
-							</div>
+					<div className='mt-4 grid grid-cols-2 gap-2'>
+						<div className='rounded-xl border border-[#d7c6ff] bg-[#f2efff] px-3 py-3'>
+							<p className='text-xs text-[#1f2a5a]/60'>Check-in</p>
+							<p className='mt-1 text-sm font-bold'>{toDisplayDate(selectedRange?.from)}</p>
 						</div>
 
-						<div className='mt-2 rounded-lg border border-[#d7c6ff] bg-[#f2efff] px-3 py-2'>
-							<label className='text-xs text-[#1f2a5a]/60'>Guests</label>
-							<input
-								type='number'
-								min={1}
-								max={venue.maxGuests}
-								value={guests}
-								onChange={e => setGuests(Number(e.target.value))}
-								className='w-full bg-transparent text-sm font-semibold outline-none'
-							/>
+						<div className='rounded-xl border border-[#d7c6ff] bg-[#f2efff] px-3 py-3'>
+							<p className='text-xs text-[#1f2a5a]/60'>Check-out</p>
+							<p className='mt-1 text-sm font-bold'>{toDisplayDate(selectedRange?.to)}</p>
 						</div>
+					</div>
+
+					<div className='mt-4 rounded-2xl border border-[#d9dbe8] bg-[#fbfbff] p-3'>
+						<DayPicker
+							mode='range'
+							selected={selectedRange}
+							onSelect={range => {
+								setSelectedRange(range);
+								setBookingError('');
+								setBookingSuccess('');
+							}}
+							numberOfMonths={1}
+							min={1}
+							disabled={[{ before: startOfDay(new Date()) }, ...bookedDays]}
+							modifiers={{
+								booked: bookedDays,
+							}}
+							modifiersClassNames={{
+								booked: 'bg-red-100 text-red-600 line-through rounded-full',
+								selected: 'bg-[#1f2a5a] text-white rounded-full',
+								range_middle: 'bg-[#e8fff2] text-green-800',
+								range_start: 'bg-green-600 text-white rounded-full',
+								range_end: 'bg-green-600 text-white rounded-full',
+							}}
+							classNames={{
+								root: 'w-full text-[#1f2a5a]',
+								month_caption: 'flex justify-center py-2 font-bold',
+								nav: 'flex items-center justify-between',
+								button_previous: 'rounded-full p-2 hover:bg-[#f2efff]',
+								button_next: 'rounded-full p-2 hover:bg-[#f2efff]',
+								weekdays: 'grid grid-cols-7 text-xs text-[#1f2a5a]/50',
+								weekday: 'py-2 text-center',
+								week: 'grid grid-cols-7',
+								day: 'flex justify-center p-1',
+								day_button:
+									'h-9 w-9 rounded-full text-sm font-medium transition hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-40',
+								today: 'font-bold text-[#1f2a5a]',
+							}}
+						/>
+
+						<button
+							type='button'
+							onClick={() => {
+								setSelectedRange(undefined);
+								setBookingError('');
+								setBookingSuccess('');
+							}}
+							className='mt-2 text-sm font-semibold text-[#1f2a5a]/60 hover:text-[#1f2a5a]'>
+							Clear dates
+						</button>
+					</div>
+
+					{selectedDatesAreAvailable && (
+						<p className='mt-3 rounded-lg border border-green-100 bg-green-50 px-3 py-2 text-sm font-semibold text-green-700'>
+							Selected dates are available.
+						</p>
+					)}
+
+					{dateConflict && (
+						<p className='mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600'>
+							Selected dates overlap with an existing booking.
+						</p>
+					)}
+
+					<div className='mt-3 rounded-lg border border-[#d7c6ff] bg-[#f2efff] px-3 py-2'>
+						<label className='text-xs text-[#1f2a5a]/60'>Guests</label>
+						<input
+							type='number'
+							min={1}
+							max={venue.maxGuests}
+							value={guests}
+							onChange={e => {
+								setGuests(Number(e.target.value));
+								setBookingError('');
+							}}
+							className='w-full bg-transparent text-sm font-semibold outline-none'
+						/>
 					</div>
 
 					<div className='mt-5 space-y-2 border-b border-[#d9dbe8] pb-4 text-sm'>
 						<div className='flex justify-between'>
 							<span>
-								NOK {venue.price} × {nights || 0} nights
+								NOK {venue.price} x {nights || 0} nights
 							</span>
-							<span>{subtotal}</span>
+							<span>NOK {subtotal}</span>
 						</div>
+
 						<div className='flex justify-between'>
 							<span>Cleaning fee</span>
-							<span>{nights > 0 ? cleaningFee : 0}</span>
+							<span>NOK {nights > 0 ? cleaningFee : 0}</span>
 						</div>
+
 						<div className='flex justify-between'>
 							<span>Service fee</span>
-							<span>{nights > 0 ? serviceFee : 0}</span>
+							<span>NOK {nights > 0 ? serviceFee : 0}</span>
 						</div>
 					</div>
 
@@ -269,40 +499,36 @@ export default function VenueDetailsPage() {
 						<span>NOK {total}</span>
 					</div>
 
-					{guests > venue.maxGuests && (
-						<p className='mt-3 text-sm text-red-600'>This venue allows maximum {venue.maxGuests} guests.</p>
-					)}
-
 					<label className='mt-4 flex gap-3 rounded-xl bg-[#f2efff] p-3 text-sm text-[#1f2a5a]/75'>
 						<input
 							type='checkbox'
 							checked={acceptBookingTerms}
 							onChange={e => setAcceptBookingTerms(e.target.checked)}
+							disabled={isOwner || isContinuing}
 							className='mt-1'
 						/>
 						<span>I agree to the booking terms. Bookings cannot be cancelled within 24 hours of check-in.</span>
 					</label>
 
-					{bookingError && <p className='mt-3 text-sm text-red-600'>{bookingError}</p>}
-					{bookingSuccess && <p className='mt-3 text-sm text-green-600'>{bookingSuccess}</p>}
-
 					<button
 						type='button'
 						onClick={handleBooking}
 						disabled={
-							bookingLoading ||
-							!dateFrom ||
-							!dateTo ||
+							isContinuing ||
+							isOwner ||
+							!selectedRange?.from ||
+							!selectedRange?.to ||
 							nights <= 0 ||
+							dateConflict ||
 							guests < 1 ||
 							guests > venue.maxGuests ||
 							!acceptBookingTerms
 						}
 						className='mt-5 w-full rounded-lg bg-[#1f2a5a] py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50'>
-						{bookingLoading ? 'Booking...' : 'Reserve Now'}
+						{isContinuing ? 'Preparing checkout...' : isOwner ? 'Owner cannot book' : 'Continue to checkout'}
 					</button>
 
-					<p className='mt-3 text-center text-xs text-[#1f2a5a]/50'>You will not be charged yet</p>
+					<p className='mt-3 text-center text-xs text-[#1f2a5a]/50'>You will confirm payment on the next step</p>
 				</aside>
 			</main>
 
@@ -315,5 +541,4 @@ function Amenity({ label }: { label: string }) {
 	return (
 		<span className='rounded-full border border-[#d7c6ff] bg-[#f2efff] px-3 py-1 text-xs text-[#1f2a5a]'>{label}</span>
 	);
-
 }

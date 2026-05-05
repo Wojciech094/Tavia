@@ -9,6 +9,7 @@ import MyBookingsPage from './pages/MyBookingsPage';
 import ManagerDashboardPage from './pages/ManagerDashboardPage';
 import CreateVenuePage from './pages/CreateVenuePage';
 import EditVenuePage from './pages/EditVenuePage';
+import CheckoutPage from './pages/CheckoutPage';
 function App() {
 	return (
 		<Routes>
@@ -53,6 +54,11 @@ function App() {
 			<Route
 				path='/manager/edit/:id'
 				element={<EditVenuePage />}
+			/>
+
+			<Route
+				path='/checkout/:venueId'
+				element={<CheckoutPage />}
 			/>
 		</Routes>
 	);
