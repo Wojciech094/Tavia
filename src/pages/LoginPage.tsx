@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { createApiKey, loginUser } from '../api/auth';
 import { fetchProfile } from '../api/profiles';
 import Navbar from '../components/layout/Navbar';
@@ -7,6 +7,9 @@ import { saveAuth } from '../utils/auth';
 
 export default function LoginPage() {
 	const navigate = useNavigate();
+	const location = useLocation();
+
+	const from = location.state?.from?.pathname || '/';
 
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
@@ -60,7 +63,7 @@ export default function LoginPage() {
 			setSuccess('Logged in successfully. Redirecting...');
 
 			window.setTimeout(() => {
-				navigate('/');
+				navigate(from, { replace: true });
 			}, 900);
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Login failed. Please try again.';

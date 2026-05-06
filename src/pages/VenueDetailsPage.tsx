@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { DayPicker, type DateRange } from 'react-day-picker';
 import 'react-day-picker/style.css';
 import { differenceInCalendarDays, eachDayOfInterval, format, isBefore, parseISO, startOfDay, subDays } from 'date-fns';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { fetchVenueById } from '../api/venues';
 import Footer from '../components/layout/Footer';
 import Navbar from '../components/layout/Navbar';
 import Toast from '../components/ui/Toast';
 import { PageSkeleton } from '../components/ui/Skeleton';
-import { MapPin, Star, Users } from 'lucide-react';
+import { MapPin, Star, Users, X } from 'lucide-react';
 
 interface Booking {
 	id: string;
@@ -98,6 +98,7 @@ function hasDateConflict(range: DateRange | undefined, bookings: Booking[]) {
 export default function VenueDetailsPage() {
 	const { id } = useParams();
 	const navigate = useNavigate();
+	const location = useLocation();
 
 	const [venue, setVenue] = useState<Venue | null>(null);
 	const [selectedImage, setSelectedImage] = useState('');
@@ -110,11 +111,14 @@ export default function VenueDetailsPage() {
 	const [bookingSuccess, setBookingSuccess] = useState('');
 	const [acceptBookingTerms, setAcceptBookingTerms] = useState(false);
 	const [isContinuing, setIsContinuing] = useState(false);
+	const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
 	const currentUser = getStoredUser();
-useEffect(() => {
-	window.scrollTo(0, 0);
-}, [id]);
+	const token = localStorage.getItem('token');
+
+	useEffect(() => {
+		window.scrollTo(0, 0);
+	}, [id]);
 
 	useEffect(() => {
 		let isMounted = true;
@@ -207,6 +211,11 @@ useEffect(() => {
 			return;
 		}
 
+		if (!token) {
+			setShowLoginPrompt(true);
+			return;
+		}
+
 		setBookingSuccess('Dates selected successfully. Taking you to checkout...');
 		setIsContinuing(true);
 
@@ -280,6 +289,48 @@ useEffect(() => {
 				message={bookingSuccess}
 				onClose={() => setBookingSuccess('')}
 			/>
+
+			{showLoginPrompt && (
+				<div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm'>
+					<div className='relative w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl'>
+						<button
+							type='button'
+							onClick={() => setShowLoginPrompt(false)}
+							className='absolute right-4 top-4 rounded-full p-2 text-[#1f2a5a]/50 transition hover:bg-[#f2efff] hover:text-[#1f2a5a]'>
+							<X className='h-5 w-5' />
+						</button>
+
+						<p className='text-sm font-semibold uppercase tracking-[0.2em] text-[#7c6ee6]'>Account required</p>
+
+						<h2 className='mt-3 text-2xl font-bold text-[#1f2a5a]'>Log in to continue</h2>
+
+						<p className='mt-3 leading-7 text-[#1f2a5a]/70'>
+							You need to be logged in before you can book this venue. After logging in, you will return to this venue
+							page and can continue your booking.
+						</p>
+
+						<div className='mt-6 flex flex-col gap-3 sm:flex-row'>
+							<button
+								type='button'
+								onClick={() => setShowLoginPrompt(false)}
+								className='w-full rounded-xl border border-[#d9dbe8] px-5 py-3 font-semibold text-[#1f2a5a] transition hover:bg-[#f2efff]'>
+								Stay here
+							</button>
+
+							<button
+								type='button'
+								onClick={() =>
+									navigate('/login', {
+										state: { from: location },
+									})
+								}
+								className='w-full rounded-xl bg-[#1f2a5a] px-5 py-3 font-semibold text-white transition hover:opacity-90'>
+								Log in
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 
 			<main className='mx-auto grid max-w-6xl gap-8 px-6 py-8 md:grid-cols-[1fr_380px] md:px-10'>
 				<section>
