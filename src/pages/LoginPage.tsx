@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createApiKey, loginUser } from '../api/auth';
+import { fetchProfile } from '../api/profiles';
 import Navbar from '../components/layout/Navbar';
 import { saveAuth } from '../utils/auth';
 
@@ -11,25 +12,58 @@ export default function LoginPage() {
 	const [password, setPassword] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
+	const [success, setSuccess] = useState('');
 
 	async function handleLogin(e: React.FormEvent) {
 		e.preventDefault();
 
+		if (loading) return;
+
 		try {
 			setLoading(true);
 			setError('');
+			setSuccess('');
 
 			const loginData = await loginUser(email, password);
-			const user = loginData.data;
 			const token = loginData.data.accessToken;
 
 			const keyData = await createApiKey(token);
 			const apiKey = keyData.data.key;
 
-			saveAuth(user, token, apiKey);
-			navigate('/');
+			saveAuth(
+				{
+					name: loginData.data.name,
+					email: loginData.data.email,
+					venueManager: loginData.data.venueManager,
+					avatar: loginData.data.avatar,
+				},
+				token,
+				apiKey,
+			);
+
+			const profileData = await fetchProfile(loginData.data.name);
+			const profile = profileData.data;
+
+			saveAuth(
+				{
+					name: profile.name,
+					email: profile.email,
+					venueManager: Boolean(profile.venueManager),
+					avatar: profile.avatar,
+				},
+				token,
+				apiKey,
+			);
+
+			window.dispatchEvent(new Event('auth-change'));
+
+			setSuccess('Logged in successfully. Redirecting...');
+
+			window.setTimeout(() => {
+				navigate('/');
+			}, 900);
 		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Login failed';
+			const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
 			setError(message);
 		} finally {
 			setLoading(false);
@@ -57,10 +91,12 @@ export default function LoginPage() {
 							<p className='text-2xl font-bold'>40k+</p>
 							<p className='text-sm text-white/65'>guests</p>
 						</div>
+
 						<div className='rounded-2xl bg-white/10 p-4'>
 							<p className='text-2xl font-bold'>4.8</p>
 							<p className='text-sm text-white/65'>avg rating</p>
 						</div>
+
 						<div className='rounded-2xl bg-white/10 p-4'>
 							<p className='text-2xl font-bold'>24/7</p>
 							<p className='text-sm text-white/65'>support</p>
@@ -74,12 +110,6 @@ export default function LoginPage() {
 						<p className='mt-2 text-sm text-[#1f2a5a]/60'>Access your bookings and saved venues.</p>
 					</div>
 
-					{error && (
-						<div className='mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600'>
-							{error}
-						</div>
-					)}
-
 					<form
 						onSubmit={handleLogin}
 						className='space-y-4'>
@@ -89,9 +119,14 @@ export default function LoginPage() {
 								type='email'
 								placeholder='you@stud.noroff.no'
 								value={email}
-								onChange={e => setEmail(e.target.value)}
+								onChange={e => {
+									setEmail(e.target.value);
+									setError('');
+									setSuccess('');
+								}}
 								required
-								className='w-full rounded-xl border border-[#d9dbe8] bg-[#f5f5f7] px-4 py-3 text-sm outline-none transition focus:border-[#1f2a5a]'
+								disabled={loading}
+								className='w-full rounded-xl border border-[#d9dbe8] bg-[#f5f5f7] px-4 py-3 text-sm outline-none transition focus:border-[#1f2a5a] disabled:cursor-not-allowed disabled:opacity-60'
 							/>
 						</div>
 
@@ -101,17 +136,34 @@ export default function LoginPage() {
 								type='password'
 								placeholder='Your password'
 								value={password}
-								onChange={e => setPassword(e.target.value)}
+								onChange={e => {
+									setPassword(e.target.value);
+									setError('');
+									setSuccess('');
+								}}
 								required
-								className='w-full rounded-xl border border-[#d9dbe8] bg-[#f5f5f7] px-4 py-3 text-sm outline-none transition focus:border-[#1f2a5a]'
+								disabled={loading}
+								className='w-full rounded-xl border border-[#d9dbe8] bg-[#f5f5f7] px-4 py-3 text-sm outline-none transition focus:border-[#1f2a5a] disabled:cursor-not-allowed disabled:opacity-60'
 							/>
 						</div>
+
+						{error && (
+							<div className='rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-600'>
+								{error}
+							</div>
+						)}
+
+						{success && (
+							<div className='rounded-xl border border-green-100 bg-green-50 px-4 py-3 text-sm font-medium text-green-700'>
+								{success}
+							</div>
+						)}
 
 						<button
 							type='submit'
 							disabled={loading}
 							className='w-full rounded-xl bg-[#1f2a5a] py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60'>
-							{loading ? 'Logging in...' : 'Log in'}
+							{loading ? 'Signing in...' : 'Log in'}
 						</button>
 					</form>
 

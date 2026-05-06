@@ -1,4 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+
 import HomePage from './pages/HomePage';
 import VenuesPage from './pages/VenuesPage';
 import VenueDetailsPage from './pages/VenueDetailsPage';
@@ -10,7 +12,8 @@ import ManagerDashboardPage from './pages/ManagerDashboardPage';
 import CreateVenuePage from './pages/CreateVenuePage';
 import EditVenuePage from './pages/EditVenuePage';
 import CheckoutPage from './pages/CheckoutPage';
-function App() {
+
+export default function App() {
 	return (
 		<Routes>
 			<Route
@@ -33,35 +36,33 @@ function App() {
 				path='/register'
 				element={<RegisterPage />}
 			/>
-			<Route
-				path='/profile'
-				element={<ProfilePage />}
-			/>
-			<Route
-				path='/my-bookings'
-				element={<MyBookingsPage />}
-			/>
 
-			<Route
-				path='/manager'
-				element={<ManagerDashboardPage />}
-			/>
-
-			<Route
-				path='/manager/create'
-				element={<CreateVenuePage />}
-			/>
-			<Route
-				path='/manager/edit/:id'
-				element={<EditVenuePage />}
-			/>
-
-			<Route
-				path='/checkout/:venueId'
-				element={<CheckoutPage />}
-			/>
+			<Route element={<ProtectedRoute />}>
+				<Route
+					path='/profile'
+					element={<ProfilePage />}
+				/>
+				<Route
+					path='/my-bookings'
+					element={<MyBookingsPage />}
+				/>
+				<Route
+					path='/manager'
+					element={<ManagerDashboardPage />}
+				/>
+				<Route
+					path='/manager/create'
+					element={<CreateVenuePage />}
+				/>
+				<Route
+					path='/manager/edit/:id'
+					element={<EditVenuePage />}
+				/>
+				<Route
+					path='/checkout/:id'
+					element={<CheckoutPage />}
+				/>
+			</Route>
 		</Routes>
 	);
 }
-
-export default App;
