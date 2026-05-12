@@ -12,6 +12,10 @@ const amenities = [
 	{ key: 'pets', label: 'Pets allowed' },
 ] as const;
 
+function isEmpty(value: string) {
+	return value.trim().length === 0;
+}
+
 export default function CreateVenuePage() {
 	const navigate = useNavigate();
 
@@ -31,16 +35,18 @@ export default function CreateVenuePage() {
 	const [images, setImages] = useState<string[]>(['']);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
+	const [acceptTerms, setAcceptTerms] = useState(false);
 
 	function handleChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
 		const { name, value, type } = event.target;
-
 		const checked = event.target instanceof HTMLInputElement ? event.target.checked : false;
 
 		setForm(prev => ({
 			...prev,
 			[name]: type === 'checkbox' ? checked : value,
 		}));
+
+		if (error) setError('');
 	}
 
 	function updateImage(index: number, value: string) {
@@ -62,19 +68,31 @@ export default function CreateVenuePage() {
 
 		const cleanImages = images.map(image => image.trim()).filter(image => image.length > 0);
 
+		if (isEmpty(form.city) || isEmpty(form.country)) {
+			setError('City and country are required before creating a venue.');
+			setLoading(false);
+			return;
+		}
+
+		if (!acceptTerms) {
+			setError('You must accept the venue manager terms before creating a venue.');
+			setLoading(false);
+			return;
+		}
+
 		try {
 			await createVenue({
-				name: form.name,
-				description: form.description,
+				name: form.name.trim(),
+				description: form.description.trim(),
 				price: Number(form.price),
 				maxGuests: Number(form.maxGuests),
 				media: cleanImages.map((url, index) => ({
 					url,
-					alt: `${form.name} image ${index + 1}`,
+					alt: `${form.name.trim()} image ${index + 1}`,
 				})),
 				location: {
-					city: form.city,
-					country: form.country,
+					city: form.city.trim(),
+					country: form.country.trim(),
 				},
 				meta: {
 					wifi: form.wifi,
@@ -108,7 +126,9 @@ export default function CreateVenuePage() {
 					className='grid gap-6 lg:grid-cols-[1.1fr_0.9fr]'>
 					<div className='space-y-5 rounded-4xl bg-white p-6 shadow-sm ring-1 ring-black/5'>
 						<div>
-							<label className='mb-2 block text-sm font-semibold'>Venue name</label>
+							<label className='mb-2 block text-sm font-semibold'>
+								Venue name <span className='text-red-500'>*</span>
+							</label>
 							<input
 								name='name'
 								value={form.name}
@@ -120,7 +140,9 @@ export default function CreateVenuePage() {
 						</div>
 
 						<div>
-							<label className='mb-2 block text-sm font-semibold'>Description</label>
+							<label className='mb-2 block text-sm font-semibold'>
+								Description <span className='text-red-500'>*</span>
+							</label>
 							<textarea
 								name='description'
 								value={form.description}
@@ -134,7 +156,9 @@ export default function CreateVenuePage() {
 
 						<div className='grid gap-4 md:grid-cols-2'>
 							<div>
-								<label className='mb-2 block text-sm font-semibold'>Price per night</label>
+								<label className='mb-2 block text-sm font-semibold'>
+									Price per night <span className='text-red-500'>*</span>
+								</label>
 								<input
 									name='price'
 									type='number'
@@ -148,7 +172,9 @@ export default function CreateVenuePage() {
 							</div>
 
 							<div>
-								<label className='mb-2 block text-sm font-semibold'>Max guests</label>
+								<label className='mb-2 block text-sm font-semibold'>
+									Max guests <span className='text-red-500'>*</span>
+								</label>
 								<input
 									name='maxGuests'
 									type='number'
@@ -164,24 +190,36 @@ export default function CreateVenuePage() {
 
 						<div className='grid gap-4 md:grid-cols-2'>
 							<div>
-								<label className='mb-2 block text-sm font-semibold'>City</label>
+								<label className='mb-2 block text-sm font-semibold'>
+									City <span className='text-red-500'>*</span>
+								</label>
 								<input
 									name='city'
 									value={form.city}
 									onChange={handleChange}
 									placeholder='Oslo'
-									className='w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#1f2a5a] focus:ring-4 focus:ring-[#1f2a5a]/10'
+									required
+									aria-required='true'
+									className={`w-full rounded-2xl border px-4 py-3 outline-none transition focus:border-[#1f2a5a] focus:ring-4 focus:ring-[#1f2a5a]/10 ${
+										error && isEmpty(form.city) ? 'border-red-300 bg-red-50' : 'border-slate-200'
+									}`}
 								/>
 							</div>
 
 							<div>
-								<label className='mb-2 block text-sm font-semibold'>Country</label>
+								<label className='mb-2 block text-sm font-semibold'>
+									Country <span className='text-red-500'>*</span>
+								</label>
 								<input
 									name='country'
 									value={form.country}
 									onChange={handleChange}
 									placeholder='Norway'
-									className='w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#1f2a5a] focus:ring-4 focus:ring-[#1f2a5a]/10'
+									required
+									aria-required='true'
+									className={`w-full rounded-2xl border px-4 py-3 outline-none transition focus:border-[#1f2a5a] focus:ring-4 focus:ring-[#1f2a5a]/10 ${
+										error && isEmpty(form.country) ? 'border-red-300 bg-red-50' : 'border-slate-200'
+									}`}
 								/>
 							</div>
 						</div>
@@ -287,11 +325,28 @@ export default function CreateVenuePage() {
 							)}
 						</div>
 
+						<label className='flex gap-3 rounded-3xl border border-[#d7c6ff] bg-[#f2efff] p-4 text-sm leading-6 text-[#1f2a5a]/75'>
+							<input
+								type='checkbox'
+								checked={acceptTerms}
+								onChange={event => {
+									setAcceptTerms(event.target.checked);
+									setError('');
+								}}
+								className='mt-1 h-4 w-4 accent-[#1f2a5a]'
+							/>
+
+							<span>
+								I agree to manage this venue responsibly. I understand that venues should not be removed within 24 hours
+								of an upcoming booking, and that fake or misleading bookings are not allowed.
+							</span>
+						</label>
+
 						{error && <p className='rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600'>{error}</p>}
 
 						<button
 							type='submit'
-							disabled={loading}
+							disabled={loading || !acceptTerms}
 							className='w-full rounded-full bg-[#1f2a5a] px-6 py-4 font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#2f3f7a] disabled:cursor-not-allowed disabled:opacity-60'>
 							{loading ? 'Creating...' : 'Create Venue'}
 						</button>

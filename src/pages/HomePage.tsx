@@ -1,9 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchVenues } from '../api/venues';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import VenueCard from '../components/venues/VenueCard';
+
+// Temporary safeguard: one venue returned by the API contains malformed or heavy data
+// that can cause performance issues on the details page (UI freeze).
+// To ensure a smooth and stable user experience, known problematic entries are filtered out.
+// This is a defensive approach when working with unreliable external API data.
+const HIDDEN_VENUE_IDS = ['e75a61fe-dbdb-4c6a-9935-8399a003a1b6'];
 
 interface Venue {
 	id: string;
@@ -13,6 +19,8 @@ interface Venue {
 	price: number;
 	maxGuests: number;
 	rating: number;
+	created?: string;
+	updated?: string;
 	meta?: {
 		wifi?: boolean;
 		parking?: boolean;
@@ -36,19 +44,42 @@ export default function HomePage() {
 	const navigate = useNavigate();
 
 	useEffect(() => {
+		let cancelled = false;
+
 		async function loadVenues() {
 			try {
-				const data = await fetchVenues();
+				setLoading(true);
+				setError('');
+
+				const data = await fetchVenues(1, 12);
+
+				if (cancelled) return;
+
 				setVenues(data.data);
 			} catch {
-				setError('Failed to load venues.');
+				if (!cancelled) {
+					setError('Failed to load venues.');
+				}
 			} finally {
-				setLoading(false);
+				if (!cancelled) {
+					setLoading(false);
+				}
 			}
 		}
 
-		loadVenues();
+		void loadVenues();
+
+		return () => {
+			cancelled = true;
+		};
 	}, []);
+
+	const featuredVenues = useMemo(() => {
+		return venues
+			.filter(venue => !HIDDEN_VENUE_IDS.includes(venue.id))
+			.sort((a, b) => new Date(b.created || '').getTime() - new Date(a.created || '').getTime())
+			.slice(0, 6);
+	}, [venues]);
 
 	function handleSearch() {
 		const params = new URLSearchParams();
@@ -83,6 +114,9 @@ export default function HomePage() {
 									type='text'
 									value={where}
 									onChange={event => setWhere(event.target.value)}
+									onKeyDown={event => {
+										if (event.key === 'Enter') handleSearch();
+									}}
 									placeholder='Enter location'
 									className='w-full bg-transparent text-sm font-medium outline-none placeholder:text-gray-400'
 								/>
@@ -90,16 +124,7 @@ export default function HomePage() {
 
 							<div className='hidden h-10 w-px bg-gray-200 md:block' />
 
-							<div className='flex-1 rounded-2xl px-4 py-3'>
-								<p className='mb-1 text-xs text-gray-500'>When</p>
-								<input
-									type='text'
-									placeholder='Add dates'
-									readOnly
-									title='Date picker coming soon'
-									className='w-full cursor-not-allowed bg-transparent text-sm font-medium outline-none placeholder:text-gray-400'
-								/>
-							</div>
+							
 
 							<div className='hidden h-10 w-px bg-gray-200 md:block' />
 
@@ -110,6 +135,9 @@ export default function HomePage() {
 									min='1'
 									value={guests}
 									onChange={event => setGuests(event.target.value)}
+									onKeyDown={event => {
+										if (event.key === 'Enter') handleSearch();
+									}}
 									placeholder='Add guests'
 									className='w-full bg-transparent text-sm font-medium outline-none placeholder:text-gray-400'
 								/>
@@ -128,7 +156,7 @@ export default function HomePage() {
 				<section className='bg-[#f5f5f7] px-6 py-14 text-black md:px-10'>
 					<div className='mx-auto max-w-6xl'>
 						<h2 className='text-3xl font-bold text-[#1f2a5a]'>Featured Venues</h2>
-						<p className='mb-8 mt-1 text-gray-600'>Handpicked places you will love</p>
+						<p className='mb-8 mt-1 text-gray-600'>Newest places you will love</p>
 
 						{loading && <p className='text-gray-600'>Loading venues...</p>}
 
@@ -136,8 +164,8 @@ export default function HomePage() {
 
 						{!loading && !error && (
 							<div className='grid gap-8 md:grid-cols-2 xl:grid-cols-3'>
-								{venues.slice(0, 6).map((venue, index) => {
-									const badge = index === 0 ? 'Trending' : index === 1 ? 'New' : '';
+								{featuredVenues.map((venue, index) => {
+									const badge = index === 0 ? 'Trending' : index === 1 ? 'New' : index === 5 ? 'Popular' : '';
 
 									return (
 										<VenueCard

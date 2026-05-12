@@ -5,7 +5,7 @@ import { getUser, logout } from '../../utils/auth';
 interface User {
 	name: string;
 	email: string;
-	venueManager?: boolean;
+	venueManager?: boolean | string;
 	avatar?: {
 		url: string;
 		alt?: string;
@@ -17,6 +17,8 @@ export default function Navbar() {
 
 	const [user, setUser] = useState<User | null>(() => getUser());
 	const [menuOpen, setMenuOpen] = useState(false);
+
+	const isVenueManager = user?.venueManager === true || String(user?.venueManager) === 'true';
 
 	useEffect(() => {
 		function syncUserFromStorage() {
@@ -104,7 +106,7 @@ export default function Navbar() {
 								<p className='truncate text-sm text-[#1f2a5a]/60'>{user.email}</p>
 
 								<p className='mt-2 inline-flex rounded-full bg-[#f2efff] px-3 py-1 text-xs font-medium'>
-									{user.venueManager ? 'Venue Manager' : 'Customer'}
+									{isVenueManager ? 'Venue Manager' : 'Customer'}
 								</p>
 							</div>
 
@@ -123,7 +125,7 @@ export default function Navbar() {
 									My Bookings
 								</Link>
 
-								{user.venueManager && (
+								{isVenueManager && (
 									<>
 										<Link
 											to='/manager'
