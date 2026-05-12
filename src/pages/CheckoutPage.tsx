@@ -118,7 +118,7 @@ function CheckoutPage() {
 		}
 
 		if (!/^\d{12,19}$/.test(cleanCardNumber)) {
-			errors.card = 'Card number must contain 12–19 digits.';
+			errors.card = 'Card number must contain 12-19 digits.';
 		}
 
 		if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry.trim())) {
@@ -378,7 +378,7 @@ function CheckoutPage() {
 					<div className='mt-5 space-y-3 border-b border-[#d9dbe8] pb-4 text-sm'>
 						<div className='flex justify-between'>
 							<span>
-								NOK {venue.price} × {nights} nights
+								NOK {venue.price} x {nights} nights
 							</span>
 							<span>NOK {subtotal}</span>
 						</div>
