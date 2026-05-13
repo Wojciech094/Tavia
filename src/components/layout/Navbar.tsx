@@ -69,11 +69,11 @@ export default function Navbar() {
 					Venues
 				</Link>
 
-				<a
-					href='#'
+				<Link
+					to='/about'
 					className='opacity-80 transition hover:opacity-100'>
 					About
-				</a>
+				</Link>
 			</div>
 
 			{user ? (
