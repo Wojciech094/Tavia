@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useInView } from 'react-intersection-observer';
 import { useSearchParams } from 'react-router-dom';
 import { fetchVenues } from '../api/venues';
-import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import Navbar from '../components/layout/Navbar';
+import { CardGridSkeleton } from '../components/ui/Skeleton';
 import VenueCard from '../components/venues/VenueCard';
 
 interface Venue {
@@ -13,6 +15,8 @@ interface Venue {
 	price: number;
 	maxGuests: number;
 	rating: number;
+	created?: string;
+	updated?: string;
 	meta?: {
 		wifi?: boolean;
 		parking?: boolean;
@@ -25,8 +29,34 @@ interface Venue {
 	};
 }
 
-const DEFAULT_LIMIT = 6;
+const DEFAULT_LIMIT = 13;
 const SEARCH_LIMIT = 100;
+const MAX_EMPTY_ATTEMPTS = 3;
+
+const HIDDEN_VENUE_IDS = ['e75a61fe-dbdb-4c6a-9935-8399a003a1b6'];
+
+function cleanVenues(venues: Venue[]) {
+	const seen = new Set<string>();
+
+	return venues.filter(venue => {
+		if (!venue.id) return false;
+		if (HIDDEN_VENUE_IDS.includes(venue.id)) return false;
+		if (seen.has(venue.id)) return false;
+
+		seen.add(venue.id);
+		return true;
+	});
+}
+
+function mergeUniqueVenues(currentVenues: Venue[], newVenues: Venue[]) {
+	const existingIds = new Set(currentVenues.map(venue => venue.id));
+	const uniqueNewVenues = newVenues.filter(venue => !existingIds.has(venue.id));
+
+	return {
+		venues: [...currentVenues, ...uniqueNewVenues],
+		addedCount: uniqueNewVenues.length,
+	};
+}
 
 export default function VenuesPage() {
 	const [venues, setVenues] = useState<Venue[]>([]);
@@ -35,6 +65,13 @@ export default function VenuesPage() {
 	const [loadingMore, setLoadingMore] = useState(false);
 	const [hasMore, setHasMore] = useState(true);
 	const [globalSearchLoading, setGlobalSearchLoading] = useState(false);
+
+	const loadingMoreRef = useRef(false);
+
+	const { ref: loadMoreRef, inView } = useInView({
+		rootMargin: '350px 0px',
+		threshold: 0,
+	});
 
 	const [searchParams, setSearchParams] = useSearchParams();
 
@@ -49,11 +86,7 @@ export default function VenuesPage() {
 	const [localWhere, setLocalWhere] = useState(() => where);
 	const [localGuests, setLocalGuests] = useState(() => guests);
 
-	const loadMoreRef = useRef<HTMLDivElement | null>(null);
-
-	const isFiltering = Boolean(
-		where || guests || minPrice || maxPrice || amenity || minRating || sort !== 'recommended',
-	);
+	const hasSearchFilters = Boolean(where || guests || minPrice || maxPrice || amenity || minRating);
 
 	function updateParam(key: string, value: string) {
 		const nextParams = new URLSearchParams(searchParams);
@@ -95,7 +128,7 @@ export default function VenuesPage() {
 		const searchValue = where.toLowerCase().trim();
 
 		const filtered = venues.filter(venue => {
-			const venueName = venue.name.toLowerCase();
+			const venueName = venue.name?.toLowerCase() || '';
 			const venueDescription = venue.description?.toLowerCase() || '';
 			const venueCity = venue.location?.city?.toLowerCase() || '';
 			const venueCountry = venue.location?.country?.toLowerCase() || '';
@@ -111,7 +144,6 @@ export default function VenuesPage() {
 			const matchesMinPrice = !minPrice || venue.price >= Number(minPrice);
 			const matchesMaxPrice = !maxPrice || venue.price <= Number(maxPrice);
 			const matchesRating = !minRating || venue.rating >= Number(minRating);
-
 			const matchesAmenity = !amenity || Boolean(venue.meta?.[amenity as keyof NonNullable<Venue['meta']>]);
 
 			return matchesSearch && matchesGuests && matchesMinPrice && matchesMaxPrice && matchesRating && matchesAmenity;
@@ -123,12 +155,12 @@ export default function VenuesPage() {
 			if (sort === 'rating-high') return b.rating - a.rating;
 			if (sort === 'guests-high') return b.maxGuests - a.maxGuests;
 
-			return 0;
+			return new Date(b.created || '').getTime() - new Date(a.created || '').getTime();
 		});
 	}, [venues, where, guests, minPrice, maxPrice, minRating, amenity, sort]);
 
 	useEffect(() => {
-		if (isFiltering) return;
+		if (hasSearchFilters) return;
 
 		let cancelled = false;
 
@@ -137,12 +169,14 @@ export default function VenuesPage() {
 				setLoading(true);
 				setLoadingMore(false);
 				setGlobalSearchLoading(false);
+				setHasMore(true);
+				loadingMoreRef.current = false;
 
 				const data = await fetchVenues(1, DEFAULT_LIMIT);
 
 				if (cancelled) return;
 
-				setVenues(data.data);
+				setVenues(cleanVenues(data.data));
 				setHasMore(!data.meta.isLastPage);
 				setPage(1);
 			} catch {
@@ -157,15 +191,15 @@ export default function VenuesPage() {
 			}
 		}
 
-		loadInitialVenues();
+		void loadInitialVenues();
 
 		return () => {
 			cancelled = true;
 		};
-	}, [isFiltering]);
+	}, [hasSearchFilters]);
 
 	useEffect(() => {
-		if (!isFiltering) return;
+		if (!hasSearchFilters) return;
 
 		let cancelled = false;
 
@@ -175,6 +209,7 @@ export default function VenuesPage() {
 				setLoadingMore(false);
 				setGlobalSearchLoading(true);
 				setHasMore(false);
+				loadingMoreRef.current = false;
 
 				let currentPage = 1;
 				let allVenues: Venue[] = [];
@@ -185,7 +220,10 @@ export default function VenuesPage() {
 
 					if (cancelled) return;
 
-					allVenues = [...allVenues, ...data.data];
+					const cleanedVenues = cleanVenues(data.data);
+					const merged = mergeUniqueVenues(allVenues, cleanedVenues);
+
+					allVenues = merged.venues;
 					isLastPage = data.meta.isLastPage;
 					currentPage += 1;
 				}
@@ -208,50 +246,68 @@ export default function VenuesPage() {
 			}
 		}
 
-		loadAllVenuesForFilters();
+		void loadAllVenuesForFilters();
 
 		return () => {
 			cancelled = true;
 		};
-	}, [isFiltering, where, guests, minPrice, maxPrice, amenity, minRating, sort]);
+	}, [hasSearchFilters, where, guests, minPrice, maxPrice, amenity, minRating]);
 
 	const loadMoreVenues = useCallback(async () => {
-		if (loadingMore || !hasMore || isFiltering) return;
+		if (loadingMoreRef.current || loadingMore || !hasMore || hasSearchFilters) return;
 
 		try {
+			loadingMoreRef.current = true;
 			setLoadingMore(true);
 
-			const nextPage = page + 1;
-			const data = await fetchVenues(nextPage, DEFAULT_LIMIT);
+			let nextPage = page + 1;
+			let foundNewVenues = false;
+			let reachedLastPage = false;
+			let attempts = 0;
 
-			setVenues(currentVenues => [...currentVenues, ...data.data]);
-			setHasMore(!data.meta.isLastPage);
-			setPage(nextPage);
+			while (!foundNewVenues && !reachedLastPage && attempts < MAX_EMPTY_ATTEMPTS) {
+				const data = await fetchVenues(nextPage, DEFAULT_LIMIT);
+				const cleanedVenues = cleanVenues(data.data);
+
+				setVenues(currentVenues => {
+					const merged = mergeUniqueVenues(currentVenues, cleanedVenues);
+
+					if (merged.addedCount > 0) {
+						foundNewVenues = true;
+					}
+
+					return merged.venues;
+				});
+
+				reachedLastPage = data.meta.isLastPage;
+				nextPage += 1;
+				attempts += 1;
+			}
+
+			setPage(nextPage - 1);
+
+			if (reachedLastPage || !foundNewVenues) {
+				setHasMore(false);
+			}
 		} catch {
 			setHasMore(false);
 		} finally {
+			loadingMoreRef.current = false;
 			setLoadingMore(false);
 		}
-	}, [page, loadingMore, hasMore, isFiltering]);
+	}, [page, loadingMore, hasMore, hasSearchFilters]);
 
 	useEffect(() => {
-		const target = loadMoreRef.current;
+		if (!inView || loading || loadingMore || !hasMore || hasSearchFilters) return;
 
-		if (!target || loading || loadingMore || !hasMore || isFiltering) return;
+		const timeoutId = window.setTimeout(() => {
+			void loadMoreVenues();
+		}, 0);
 
-		const observer = new IntersectionObserver(
-			entries => {
-				if (entries[0].isIntersecting) {
-					loadMoreVenues();
-				}
-			},
-			{ rootMargin: '200px' },
-		);
-
-		observer.observe(target);
-
-		return () => observer.disconnect();
-	}, [loading, loadingMore, hasMore, loadMoreVenues, isFiltering]);
+		return () => {
+			window.clearTimeout(timeoutId);
+		};
+	}, [inView, loading, loadingMore, hasMore, hasSearchFilters, loadMoreVenues]);
 
 	return (
 		<div className='min-h-screen bg-[#f5f5f7] text-[#1f2a5a]'>
@@ -293,14 +349,16 @@ export default function VenuesPage() {
 							<button
 								type='button'
 								onClick={applySearch}
-								className='rounded-full bg-[#1f2a5a] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90'>
-								Search
+								disabled={loading}
+								className='rounded-full bg-[#1f2a5a] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60'>
+								{globalSearchLoading ? 'Searching...' : 'Search'}
 							</button>
 
 							<button
 								type='button'
 								onClick={resetFilters}
-								className='rounded-full border border-[#1f2a5a]/20 bg-white px-6 py-3 text-sm font-semibold text-[#1f2a5a] transition hover:bg-[#f1f2f6]'>
+								disabled={loading}
+								className='rounded-full border border-[#1f2a5a]/20 bg-white px-6 py-3 text-sm font-semibold text-[#1f2a5a] transition hover:bg-[#f1f2f6] disabled:cursor-not-allowed disabled:opacity-60'>
 								Reset
 							</button>
 						</div>
@@ -310,7 +368,8 @@ export default function VenuesPage() {
 						<select
 							value={minPrice}
 							onChange={event => updateParam('minPrice', event.target.value)}
-							className='rounded-full border bg-white px-4 py-2 text-sm text-gray-600 outline-none'>
+							disabled={loading}
+							className='rounded-full border bg-white px-4 py-2 text-sm text-gray-600 outline-none disabled:cursor-not-allowed disabled:opacity-60'>
 							<option value=''>Min price</option>
 							<option value='500'>NOK 500+</option>
 							<option value='1000'>NOK 1000+</option>
@@ -320,7 +379,8 @@ export default function VenuesPage() {
 						<select
 							value={maxPrice}
 							onChange={event => updateParam('maxPrice', event.target.value)}
-							className='rounded-full border bg-white px-4 py-2 text-sm text-gray-600 outline-none'>
+							disabled={loading}
+							className='rounded-full border bg-white px-4 py-2 text-sm text-gray-600 outline-none disabled:cursor-not-allowed disabled:opacity-60'>
 							<option value=''>Max price</option>
 							<option value='1000'>Up to NOK 1000</option>
 							<option value='2500'>Up to NOK 2500</option>
@@ -330,7 +390,8 @@ export default function VenuesPage() {
 						<select
 							value={amenity}
 							onChange={event => updateParam('amenity', event.target.value)}
-							className='rounded-full border bg-white px-4 py-2 text-sm text-gray-600 outline-none'>
+							disabled={loading}
+							className='rounded-full border bg-white px-4 py-2 text-sm text-gray-600 outline-none disabled:cursor-not-allowed disabled:opacity-60'>
 							<option value=''>Amenities</option>
 							<option value='wifi'>Wifi</option>
 							<option value='parking'>Parking</option>
@@ -341,18 +402,20 @@ export default function VenuesPage() {
 						<select
 							value={minRating}
 							onChange={event => updateParam('minRating', event.target.value)}
-							className='rounded-full border bg-white px-4 py-2 text-sm text-gray-600 outline-none'>
+							disabled={loading}
+							className='rounded-full border bg-white px-4 py-2 text-sm text-gray-600 outline-none disabled:cursor-not-allowed disabled:opacity-60'>
 							<option value=''>Rating</option>
-							<option value='3'>3+ stars</option>
-							<option value='4'>4+ stars</option>
-							<option value='4.5'>4.5+ stars</option>
+							<option value='3'>3+ rating</option>
+							<option value='4'>4+ rating</option>
+							<option value='4.5'>4.5+ rating</option>
 						</select>
 
 						<select
 							value={sort}
 							onChange={event => updateParam('sort', event.target.value)}
-							className='rounded-full border bg-white px-4 py-2 text-sm text-gray-600 outline-none'>
-							<option value='recommended'>Recommended</option>
+							disabled={loading}
+							className='rounded-full border bg-white px-4 py-2 text-sm text-gray-600 outline-none disabled:cursor-not-allowed disabled:opacity-60'>
+							<option value='recommended'>Newest</option>
 							<option value='price-low'>Price: Low to high</option>
 							<option value='price-high'>Price: High to low</option>
 							<option value='rating-high'>Highest rating</option>
@@ -361,12 +424,12 @@ export default function VenuesPage() {
 					</div>
 
 					<div className='flex flex-col gap-1 text-sm text-gray-600 md:flex-row md:items-center md:justify-between'>
-						<span>{filteredVenues.length} venues found</span>
+						<span>{loading ? 'Loading venues...' : `${filteredVenues.length} venues found`}</span>
 
-						{isFiltering ? (
+						{hasSearchFilters ? (
 							<span>{globalSearchLoading ? 'Searching all venues...' : 'Showing results from all API pages'}</span>
 						) : (
-							<span>Scroll to load more venues</span>
+							<span>{hasMore ? 'Scroll to load more venues' : 'All venues loaded'}</span>
 						)}
 					</div>
 				</div>
@@ -374,9 +437,7 @@ export default function VenuesPage() {
 
 			<main className='mx-auto max-w-6xl px-6 py-10 md:px-10'>
 				{loading ? (
-					<div className='grid min-h-180 place-items-center rounded-3xl bg-white shadow-sm'>
-						<p className='text-sm text-[#1f2a5a]/60'>{isFiltering ? 'Searching all venues...' : 'Loading venues...'}</p>
-					</div>
+					<CardGridSkeleton />
 				) : (
 					<>
 						{filteredVenues.length === 0 ? (
@@ -406,15 +467,19 @@ export default function VenuesPage() {
 							</div>
 						)}
 
-						{hasMore && !isFiltering && (
+						{hasMore && !hasSearchFilters && (
 							<div
 								ref={loadMoreRef}
-								className='mt-10 flex justify-center'>
-								{loadingMore && <p className='text-sm text-[#1f2a5a]/60'>Loading more venues...</p>}
+								className='mt-10 flex min-h-24 items-center justify-center'>
+								{loadingMore && (
+									<div className='rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#1f2a5a] shadow-sm ring-1 ring-black/5'>
+										Loading more venues...
+									</div>
+								)}
 							</div>
 						)}
 
-						{!hasMore && venues.length > 0 && !isFiltering && (
+						{!hasMore && venues.length > 0 && !hasSearchFilters && (
 							<p className='mt-10 text-center text-sm text-[#1f2a5a]/60'>You have reached the end.</p>
 						)}
 					</>
