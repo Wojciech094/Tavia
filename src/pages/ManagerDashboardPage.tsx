@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AlertTriangle, CalendarCheck, Home, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, CalendarCheck, Home, Plus, Trash2, X } from 'lucide-react';
 import { deleteVenue, fetchMyVenues } from '../api/managerVenues';
 import Footer from '../components/layout/Footer';
 import Navbar from '../components/layout/Navbar';
@@ -23,6 +23,11 @@ interface Venue {
 	maxGuests: number;
 	media?: { url: string; alt?: string }[];
 	bookings?: Booking[];
+}
+
+interface BookingsModalData {
+	venueName: string;
+	bookings: Booking[];
 }
 
 function formatDate(date: string) {
@@ -51,6 +56,7 @@ export default function ManagerDashboardPage() {
 	const [success, setSuccess] = useState('');
 	const [deletingId, setDeletingId] = useState<string | null>(null);
 	const [venueToDelete, setVenueToDelete] = useState<Venue | null>(null);
+	const [bookingsModal, setBookingsModal] = useState<BookingsModalData | null>(null);
 
 	useEffect(() => {
 		async function load() {
@@ -131,11 +137,11 @@ export default function ManagerDashboardPage() {
 				)}
 
 				{loading && (
-					<div className='grid gap-6 md:grid-cols-2 xl:grid-cols-3'>
+					<div className='grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3'>
 						{Array.from({ length: 6 }).map((_, index) => (
 							<div
 								key={index}
-								className='rounded-2xl bg-white p-4 shadow-sm'>
+								className='h-fit rounded-2xl bg-white p-4 shadow-sm'>
 								<div className='h-40 animate-pulse rounded-xl bg-gray-200' />
 								<div className='mt-4 h-5 w-2/3 animate-pulse rounded bg-gray-200' />
 								<div className='mt-2 h-4 w-1/2 animate-pulse rounded bg-gray-200' />
@@ -167,7 +173,7 @@ export default function ManagerDashboardPage() {
 				)}
 
 				{!loading && venues.length > 0 && (
-					<div className='grid gap-6 md:grid-cols-2 xl:grid-cols-3'>
+					<div className='grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3'>
 						{venues.map(venue => {
 							const image = venue.media?.[0]?.url;
 							const upcomingBookings = getUpcomingBookings(venue.bookings);
@@ -184,7 +190,7 @@ export default function ManagerDashboardPage() {
 											navigate(`/venues/${venue.id}`);
 										}
 									}}
-									className='cursor-pointer rounded-2xl bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-xl'>
+									className='h-fit cursor-pointer rounded-2xl bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-xl'>
 									<div className='h-40 overflow-hidden rounded-xl bg-gray-200'>
 										{image ? (
 											<img
@@ -241,9 +247,18 @@ export default function ManagerDashboardPage() {
 												))}
 
 												{upcomingBookings.length > 3 && (
-													<p className='text-xs font-semibold text-[#1f2a5a]/60'>
-														+ {upcomingBookings.length - 3} more upcoming bookings
-													</p>
+													<button
+														type='button'
+														onClick={event => {
+															event.stopPropagation();
+															setBookingsModal({
+																venueName: venue.name,
+																bookings: upcomingBookings,
+															});
+														}}
+														className='text-left text-xs font-semibold text-[#4b5bbd] transition hover:underline'>
+														View all bookings (+{upcomingBookings.length - 3} more)
+													</button>
 												)}
 											</div>
 										)}
@@ -300,6 +315,66 @@ export default function ManagerDashboardPage() {
 					</div>
 				)}
 			</main>
+
+			{bookingsModal && (
+				<div
+					className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm'
+					onClick={() => setBookingsModal(null)}>
+					<div
+						className='max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl'
+						onClick={event => event.stopPropagation()}>
+						<div className='flex items-start justify-between gap-4 border-b border-[#d9dbe8] p-6'>
+							<div>
+								<p className='text-sm font-semibold uppercase tracking-[0.2em] text-[#1f2a5a]/45'>Upcoming bookings</p>
+								<h2 className='mt-1 text-2xl font-bold'>{bookingsModal.venueName}</h2>
+								<p className='mt-1 text-sm text-gray-500'>
+									{bookingsModal.bookings.length} active {bookingsModal.bookings.length === 1 ? 'booking' : 'bookings'}
+								</p>
+							</div>
+
+							<button
+								type='button'
+								onClick={() => setBookingsModal(null)}
+								className='flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition hover:bg-gray-200'
+								aria-label='Close bookings list'>
+								<X size={18} />
+							</button>
+						</div>
+
+						<div className='max-h-[60vh] space-y-3 overflow-y-auto p-6'>
+							{bookingsModal.bookings.map(booking => (
+								<div
+									key={booking.id}
+									className='rounded-2xl border border-[#d9dbe8] bg-[#fbfbff] p-4'>
+									<div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+										<div>
+											<p className='text-sm font-bold text-[#1f2a5a]'>
+												{formatDate(booking.dateFrom)} → {formatDate(booking.dateTo)}
+											</p>
+
+											<p className='mt-1 text-sm text-gray-500'>
+												{booking.guests} {booking.guests === 1 ? 'guest' : 'guests'}
+											</p>
+										</div>
+
+										<span className='w-fit rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700'>
+											Confirmed
+										</span>
+									</div>
+
+									<div className='mt-3 rounded-xl bg-white px-3 py-3 text-sm'>
+										<p className='font-semibold text-[#1f2a5a]'>{booking.customer?.name || 'Guest name unavailable'}</p>
+
+										<p className='mt-1 break-all text-gray-500'>
+											{booking.customer?.email || 'Guest email unavailable'}
+										</p>
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+				</div>
+			)}
 
 			{venueToDelete && (
 				<div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm'>
