@@ -58,6 +58,12 @@ function mergeUniqueVenues(currentVenues: Venue[], newVenues: Venue[]) {
 	};
 }
 
+function getCreatedTime(venue: Venue) {
+	const createdTime = new Date(venue.created || '').getTime();
+
+	return Number.isNaN(createdTime) ? 0 : createdTime;
+}
+
 export default function VenuesPage() {
 	const [venues, setVenues] = useState<Venue[]>([]);
 	const [page, setPage] = useState(1);
@@ -81,12 +87,12 @@ export default function VenuesPage() {
 	const maxPrice = searchParams.get('maxPrice') || '';
 	const amenity = searchParams.get('amenity') || '';
 	const minRating = searchParams.get('minRating') || '';
-	const sort = searchParams.get('sort') || 'recommended';
+	const sort = searchParams.get('sort') || '';
 
 	const [localWhere, setLocalWhere] = useState(() => where);
 	const [localGuests, setLocalGuests] = useState(() => guests);
 
-	const hasSearchFilters = Boolean(where || guests || minPrice || maxPrice || amenity || minRating);
+	const hasSearchFilters = Boolean(where || guests || minPrice || maxPrice || amenity || minRating || sort);
 
 	function updateParam(key: string, value: string) {
 		const nextParams = new URLSearchParams(searchParams);
@@ -150,12 +156,14 @@ export default function VenuesPage() {
 		});
 
 		return [...filtered].sort((a, b) => {
+			if (sort === 'newest') return getCreatedTime(b) - getCreatedTime(a);
+			if (sort === 'oldest') return getCreatedTime(a) - getCreatedTime(b);
 			if (sort === 'price-low') return a.price - b.price;
 			if (sort === 'price-high') return b.price - a.price;
 			if (sort === 'rating-high') return b.rating - a.rating;
 			if (sort === 'guests-high') return b.maxGuests - a.maxGuests;
 
-			return new Date(b.created || '').getTime() - new Date(a.created || '').getTime();
+			return 0;
 		});
 	}, [venues, where, guests, minPrice, maxPrice, minRating, amenity, sort]);
 
@@ -251,7 +259,7 @@ export default function VenuesPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, [hasSearchFilters, where, guests, minPrice, maxPrice, amenity, minRating]);
+	}, [hasSearchFilters, where, guests, minPrice, maxPrice, amenity, minRating, sort]);
 
 	const loadMoreVenues = useCallback(async () => {
 		if (loadingMoreRef.current || loadingMore || !hasMore || hasSearchFilters) return;
@@ -415,7 +423,9 @@ export default function VenuesPage() {
 							onChange={event => updateParam('sort', event.target.value)}
 							disabled={loading}
 							className='rounded-full border bg-white px-4 py-2 text-sm text-gray-600 outline-none disabled:cursor-not-allowed disabled:opacity-60'>
-							<option value='recommended'>Newest</option>
+							<option value=''>Sort by</option>
+							<option value='newest'>Newest</option>
+							<option value='oldest'>Oldest</option>
 							<option value='price-low'>Price: Low to high</option>
 							<option value='price-high'>Price: High to low</option>
 							<option value='rating-high'>Highest rating</option>
@@ -444,6 +454,7 @@ export default function VenuesPage() {
 							<div className='rounded-3xl bg-white p-10 text-center shadow-sm'>
 								<h2 className='text-2xl font-bold'>No venues found</h2>
 								<p className='mt-2 text-gray-500'>Try changing your search or removing some filters.</p>
+
 								<button
 									type='button'
 									onClick={resetFilters}
@@ -452,7 +463,7 @@ export default function VenuesPage() {
 								</button>
 							</div>
 						) : (
-							<div className='grid min-h-180 gap-8 md:grid-cols-2 xl:grid-cols-3'>
+							<div className='grid items-stretch gap-8 md:grid-cols-2 xl:grid-cols-3'>
 								{filteredVenues.map((venue, index) => {
 									const badge = index === 0 ? 'Trending' : index === 1 ? 'New' : index === 5 ? 'Popular' : '';
 

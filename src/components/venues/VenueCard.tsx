@@ -84,7 +84,7 @@ function VenueCard({ venue, badge }: VenueCardProps) {
 	return (
 		<Link
 			to={`/venues/${venue.id}`}
-			className='group flex min-h-142 flex-col overflow-hidden rounded-4xl bg-white shadow-[0_18px_45px_rgba(31,42,90,0.08)] ring-1 ring-black/5 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_30px_80px_rgba(31,42,90,0.18)]'>
+			className='group flex h-full flex-col overflow-hidden rounded-4xl bg-white shadow-[0_18px_45px_rgba(31,42,90,0.08)] ring-1 ring-black/5 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_30px_80px_rgba(31,42,90,0.18)]'>
 			<div className='relative h-72 shrink-0 overflow-hidden bg-slate-200'>
 				{image ? (
 					<img
@@ -96,8 +96,12 @@ function VenueCard({ venue, badge }: VenueCardProps) {
 						className='h-full w-full object-cover transition duration-700 group-hover:scale-110'
 					/>
 				) : (
-					<div className='flex h-full items-center justify-center bg-linear-to-br from-slate-200 to-slate-300 text-sm font-semibold text-slate-500'>
-						No image available
+					<div className='relative flex h-full items-center justify-center overflow-hidden bg-linear-to-br from-slate-200 via-slate-300 to-slate-400'>
+						<div className='absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.55),transparent_35%),radial-gradient(circle_at_80%_10%,rgba(255,255,255,0.35),transparent_28%)]' />
+
+						<div className='relative text-center'>
+							<p className='text-sm font-bold text-slate-600'>No image available</p>
+						</div>
 					</div>
 				)}
 
@@ -151,7 +155,7 @@ function VenueCard({ venue, badge }: VenueCardProps) {
 					<p className='pb-1 text-sm font-semibold text-slate-400'>/ night</p>
 				</div>
 
-				<div className='mt-4 flex flex-wrap gap-2'>
+				<div className='mt-4 flex min-h-18 flex-wrap content-start gap-2'>
 					{amenities.length > 0 ? (
 						amenities.slice(0, 4).map(amenity => {
 							const Icon = amenity.icon;
@@ -159,14 +163,14 @@ function VenueCard({ venue, badge }: VenueCardProps) {
 							return (
 								<span
 									key={amenity.label}
-									className='inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-[#1f2a5a] ring-1 ring-blue-100'>
+									className='inline-flex h-fit items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-[#1f2a5a] ring-1 ring-blue-100'>
 									<Icon className='h-3.5 w-3.5' />
 									{amenity.label}
 								</span>
 							);
 						})
 					) : (
-						<span className='rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-500 ring-1 ring-slate-200'>
+						<span className='h-fit rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-500 ring-1 ring-slate-200'>
 							Standard stay
 						</span>
 					)}
