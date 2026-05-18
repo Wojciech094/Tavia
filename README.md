@@ -1,73 +1,112 @@
-# React + TypeScript + Vite
+# Tavia
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Tavia is a modern accommodation booking application built for the Noroff Project Exam 2 brief.  
+The project uses the Noroff Holidaze API and allows customers to browse venues and make bookings, while venue managers can create and manage their own venues.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+### All users
 
-## React Compiler
+- Browse a list of venues
+- Search venues by name, city or country
+- Filter venues by price, amenities, rating and guest count
+- Sort venues by newest, oldest, price, rating and guest capacity
+- View a specific venue details page
+- View venue availability and booked dates
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Customers
 
-## Expanding the ESLint configuration
+- Register as a customer using a `stud.noroff.no` email
+- Log in and log out
+- Create a booking
+- View upcoming bookings
+- Update profile avatar
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Venue managers
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Register as a venue manager using a `stud.noroff.no` email
+- Log in and log out
+- Create, edit and delete venues
+- View upcoming bookings for managed venues
+- Update profile avatar
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Built With
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- React Router
+- React Day Picker
+- Date-fns
+- Lucide React
+- Playwright
+- Noroff Holidaze API
+
+## Getting Started
+
+### Installation
+
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Run locally
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev
 ```
+
+### Build
+
+```bash
+npm run build
+```
+
+### Preview production build
+
+```bash
+npm run preview
+```
+
+### Run linting
+
+```bash
+npm run lint
+```
+
+### Run Playwright tests
+
+```bash
+npm run test:e2e
+```
+
+## Testing
+
+The project includes Playwright end-to-end tests for core user flows:
+
+- Home page loading
+- Navigation to venues
+- Venue list rendering
+- Opening venue details
+- Search
+- Filters
+- Sort by newest
+- Login page rendering
+- Register page rendering
+- Basic responsive layout smoke test
+
+Full customer and venue manager flows were also tested manually, including registration, login, profile update, booking creation, manager venue creation, editing, deletion and viewing managed bookings.
+
+## Links
+
+- Live site:
+- GitHub repository:
+- Figma style guide:
+- Figma prototype:
+- Kanban board:
+- Roadmap:
+
+## Author
+
+Wojtek Lesniak
