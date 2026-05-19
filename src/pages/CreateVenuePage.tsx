@@ -116,7 +116,7 @@ export default function CreateVenuePage() {
 
 			<main className='mx-auto w-full max-w-5xl flex-1 px-6 py-10 md:px-10'>
 				<div className='mb-8'>
-					<p className='text-sm font-semibold uppercase tracking-[0.2em] text-[#7b6bd6]'>Manager tools</p>
+					<p className='text-sm font-semibold uppercase tracking-[0.2em] text-[#4f46a5]'>Manager tools</p>
 					<h1 className='mt-2 text-4xl font-black'>Create Venue</h1>
 					<p className='mt-2 text-slate-500'>Add a new venue with images, details and amenities.</p>
 				</div>
@@ -126,10 +126,13 @@ export default function CreateVenuePage() {
 					className='grid gap-6 lg:grid-cols-[1.1fr_0.9fr]'>
 					<div className='space-y-5 rounded-4xl bg-white p-6 shadow-sm ring-1 ring-black/5'>
 						<div>
-							<label className='mb-2 block text-sm font-semibold'>
+							<label
+								htmlFor='venue-name'
+								className='mb-2 block text-sm font-semibold'>
 								Venue name <span className='text-red-500'>*</span>
 							</label>
 							<input
+								id='venue-name'
 								name='name'
 								value={form.name}
 								onChange={handleChange}
@@ -140,10 +143,13 @@ export default function CreateVenuePage() {
 						</div>
 
 						<div>
-							<label className='mb-2 block text-sm font-semibold'>
+							<label
+								htmlFor='venue-description'
+								className='mb-2 block text-sm font-semibold'>
 								Description <span className='text-red-500'>*</span>
 							</label>
 							<textarea
+								id='venue-description'
 								name='description'
 								value={form.description}
 								onChange={handleChange}
@@ -156,10 +162,13 @@ export default function CreateVenuePage() {
 
 						<div className='grid gap-4 md:grid-cols-2'>
 							<div>
-								<label className='mb-2 block text-sm font-semibold'>
+								<label
+									htmlFor='venue-price'
+									className='mb-2 block text-sm font-semibold'>
 									Price per night <span className='text-red-500'>*</span>
 								</label>
 								<input
+									id='venue-price'
 									name='price'
 									type='number'
 									min='1'
@@ -172,10 +181,13 @@ export default function CreateVenuePage() {
 							</div>
 
 							<div>
-								<label className='mb-2 block text-sm font-semibold'>
+								<label
+									htmlFor='venue-max-guests'
+									className='mb-2 block text-sm font-semibold'>
 									Max guests <span className='text-red-500'>*</span>
 								</label>
 								<input
+									id='venue-max-guests'
 									name='maxGuests'
 									type='number'
 									min='1'
@@ -190,10 +202,13 @@ export default function CreateVenuePage() {
 
 						<div className='grid gap-4 md:grid-cols-2'>
 							<div>
-								<label className='mb-2 block text-sm font-semibold'>
+								<label
+									htmlFor='venue-city'
+									className='mb-2 block text-sm font-semibold'>
 									City <span className='text-red-500'>*</span>
 								</label>
 								<input
+									id='venue-city'
 									name='city'
 									value={form.city}
 									onChange={handleChange}
@@ -207,10 +222,13 @@ export default function CreateVenuePage() {
 							</div>
 
 							<div>
-								<label className='mb-2 block text-sm font-semibold'>
+								<label
+									htmlFor='venue-country'
+									className='mb-2 block text-sm font-semibold'>
 									Country <span className='text-red-500'>*</span>
 								</label>
 								<input
+									id='venue-country'
 									name='country'
 									value={form.country}
 									onChange={handleChange}
@@ -276,7 +294,14 @@ export default function CreateVenuePage() {
 									<div
 										key={index}
 										className='flex gap-2'>
+										<label
+											htmlFor={`venue-image-${index}`}
+											className='sr-only'>
+											Image URL {index + 1}
+										</label>
+
 										<input
+											id={`venue-image-${index}`}
 											value={image}
 											onChange={event => updateImage(index, event.target.value)}
 											placeholder={`Image URL ${index + 1}`}
@@ -319,14 +344,17 @@ export default function CreateVenuePage() {
 										))}
 								</div>
 							) : (
-								<div className='flex h-56 items-center justify-center rounded-3xl bg-[#f5f5f7] text-sm text-slate-400'>
+								<div className='flex h-56 items-center justify-center rounded-3xl bg-[#f5f5f7] text-sm text-slate-500'>
 									Image previews will appear here
 								</div>
 							)}
 						</div>
 
-						<label className='flex gap-3 rounded-3xl border border-[#d7c6ff] bg-[#f2efff] p-4 text-sm leading-6 text-[#1f2a5a]/75'>
+						<label
+							htmlFor='venue-manager-terms'
+							className='flex gap-3 rounded-3xl border border-[#d7c6ff] bg-[#f2efff] p-4 text-sm leading-6 text-[#1f2a5a]/75'>
 							<input
+								id='venue-manager-terms'
 								type='checkbox'
 								checked={acceptTerms}
 								onChange={event => {

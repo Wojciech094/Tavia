@@ -117,8 +117,13 @@ export default function LoginPage() {
 						onSubmit={handleLogin}
 						className='space-y-4'>
 						<div>
-							<label className='mb-2 block text-sm font-medium'>Email</label>
+							<label
+								htmlFor='login-email'
+								className='mb-2 block text-sm font-medium'>
+								Email
+							</label>
 							<input
+								id='login-email'
 								type='email'
 								placeholder='you@stud.noroff.no'
 								value={email}
@@ -134,8 +139,13 @@ export default function LoginPage() {
 						</div>
 
 						<div>
-							<label className='mb-2 block text-sm font-medium'>Password</label>
+							<label
+								htmlFor='login-password'
+								className='mb-2 block text-sm font-medium'>
+								Password
+							</label>
 							<input
+								id='login-password'
 								type='password'
 								placeholder='Your password'
 								value={password}

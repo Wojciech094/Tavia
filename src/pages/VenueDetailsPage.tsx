@@ -511,18 +511,21 @@ export default function VenueDetailsPage() {
 						</p>
 					)}
 
-					<div className='mt-3 rounded-lg border border-[#d7c6ff] bg-[#f2efff] px-3 py-2'>
-						<label className='text-xs text-[#1f2a5a]/60'>Guests</label>
+					<div>
+						<label
+							htmlFor='booking-guests'
+							className='mb-2 block text-sm font-semibold text-[#1f2a5a]'>
+							Guests
+						</label>
+
 						<input
+							id='booking-guests'
 							type='number'
-							min={1}
+							min='1'
 							max={venue.maxGuests}
 							value={guests}
-							onChange={e => {
-								setGuests(Number(e.target.value));
-								setBookingError('');
-							}}
-							className='w-full bg-transparent text-sm font-semibold outline-none'
+							onChange={event => setGuests(Number(event.target.value))}
+							className='w-full rounded-2xl border border-[#d9dbe8] bg-white px-4 py-3 text-sm font-semibold text-[#1f2a5a] outline-none transition focus:border-[#1f2a5a] focus:ring-4 focus:ring-[#1f2a5a]/10'
 						/>
 					</div>
 

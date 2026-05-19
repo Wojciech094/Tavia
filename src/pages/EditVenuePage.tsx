@@ -155,7 +155,7 @@ export default function EditVenuePage() {
 				</Link>
 
 				<div className='mb-8'>
-					<p className='text-sm font-semibold uppercase tracking-[0.2em] text-[#7b6bd6]'>Manager tools</p>
+					<p className='text-sm font-semibold uppercase tracking-[0.2em] text-[#1f2a5a]'>Manager tools</p>
 					<h1 className='mt-2 text-4xl font-black'>Edit Venue</h1>
 					<p className='mt-2 text-slate-500'>Update your venue details, images and amenities.</p>
 				</div>
@@ -165,8 +165,13 @@ export default function EditVenuePage() {
 					className='grid gap-6 lg:grid-cols-[1.1fr_0.9fr]'>
 					<div className='space-y-5 rounded-4xl bg-white p-6 shadow-sm ring-1 ring-black/5'>
 						<div>
-							<label className='mb-2 block text-sm font-semibold'>Venue name</label>
+							<label
+								htmlFor='edit-venue-name'
+								className='mb-2 block text-sm font-semibold'>
+								Venue name
+							</label>
 							<input
+								id='edit-venue-name'
 								name='name'
 								value={form.name}
 								onChange={handleChange}
@@ -176,8 +181,13 @@ export default function EditVenuePage() {
 						</div>
 
 						<div>
-							<label className='mb-2 block text-sm font-semibold'>Description</label>
+							<label
+								htmlFor='edit-venue-description'
+								className='mb-2 block text-sm font-semibold'>
+								Description
+							</label>
 							<textarea
+								id='edit-venue-description'
 								name='description'
 								value={form.description}
 								onChange={handleChange}
@@ -189,8 +199,13 @@ export default function EditVenuePage() {
 
 						<div className='grid gap-4 md:grid-cols-2'>
 							<div>
-								<label className='mb-2 block text-sm font-semibold'>Price per night</label>
+								<label
+									htmlFor='edit-venue-price'
+									className='mb-2 block text-sm font-semibold'>
+									Price per night
+								</label>
 								<input
+									id='edit-venue-price'
 									name='price'
 									type='number'
 									min='1'
@@ -202,8 +217,13 @@ export default function EditVenuePage() {
 							</div>
 
 							<div>
-								<label className='mb-2 block text-sm font-semibold'>Max guests</label>
+								<label
+									htmlFor='edit-venue-max-guests'
+									className='mb-2 block text-sm font-semibold'>
+									Max guests
+								</label>
 								<input
+									id='edit-venue-max-guests'
 									name='maxGuests'
 									type='number'
 									min='1'
@@ -217,8 +237,13 @@ export default function EditVenuePage() {
 
 						<div className='grid gap-4 md:grid-cols-2'>
 							<div>
-								<label className='mb-2 block text-sm font-semibold'>City</label>
+								<label
+									htmlFor='edit-venue-city'
+									className='mb-2 block text-sm font-semibold'>
+									City
+								</label>
 								<input
+									id='edit-venue-city'
 									name='city'
 									value={form.city}
 									onChange={handleChange}
@@ -227,8 +252,13 @@ export default function EditVenuePage() {
 							</div>
 
 							<div>
-								<label className='mb-2 block text-sm font-semibold'>Country</label>
+								<label
+									htmlFor='edit-venue-country'
+									className='mb-2 block text-sm font-semibold'>
+									Country
+								</label>
 								<input
+									id='edit-venue-country'
 									name='country'
 									value={form.country}
 									onChange={handleChange}
@@ -289,7 +319,14 @@ export default function EditVenuePage() {
 									<div
 										key={index}
 										className='flex gap-2'>
+										<label
+											htmlFor={`edit-venue-image-${index}`}
+											className='sr-only'>
+											Image URL {index + 1}
+										</label>
+
 										<input
+											id={`edit-venue-image-${index}`}
 											value={image}
 											onChange={event => updateImage(index, event.target.value)}
 											placeholder={`Image URL ${index + 1}`}
@@ -332,7 +369,7 @@ export default function EditVenuePage() {
 										))}
 								</div>
 							) : (
-								<div className='flex h-56 items-center justify-center rounded-3xl bg-[#f5f5f7] text-sm text-slate-400'>
+								<div className='flex h-56 items-center justify-center rounded-3xl bg-[#f5f5f7] text-sm text-slate-500'>
 									Image previews will appear here
 								</div>
 							)}

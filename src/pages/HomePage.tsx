@@ -109,8 +109,14 @@ export default function HomePage() {
 
 						<div className='flex flex-col gap-3 rounded-4xl bg-white p-3 text-black shadow-lg md:flex-row md:items-center'>
 							<div className='flex-1 rounded-2xl px-4 py-3'>
-								<p className='mb-1 text-xs text-gray-500'>Where</p>
+								<label
+									htmlFor='home-search-location'
+									className='mb-1 block text-xs text-gray-500'>
+									Where
+								</label>
+
 								<input
+									id='home-search-location'
 									type='text'
 									value={where}
 									onChange={event => setWhere(event.target.value)}
@@ -124,13 +130,15 @@ export default function HomePage() {
 
 							<div className='hidden h-10 w-px bg-gray-200 md:block' />
 
-							
-
-							<div className='hidden h-10 w-px bg-gray-200 md:block' />
-
 							<div className='flex-1 rounded-2xl px-4 py-3'>
-								<p className='mb-1 text-xs text-gray-500'>Who</p>
+								<label
+									htmlFor='home-search-guests'
+									className='mb-1 block text-xs text-gray-500'>
+									Who
+								</label>
+
 								<input
+									id='home-search-guests'
 									type='number'
 									min='1'
 									value={guests}
@@ -146,7 +154,7 @@ export default function HomePage() {
 							<button
 								type='button'
 								onClick={handleSearch}
-								className='rounded-full bg-[#1f2a5a] px-8 py-4 font-medium text-white transition hover:opacity-90'>
+								className='rounded-full bg-[#1f2a5a] px-8 py-4 text-sm font-bold text-white transition hover:bg-[#2f3f7a]'>
 								Search
 							</button>
 						</div>

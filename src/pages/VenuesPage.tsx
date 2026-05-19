@@ -325,8 +325,14 @@ export default function VenuesPage() {
 				<div className='mx-auto max-w-6xl space-y-4'>
 					<div className='grid gap-3 rounded-4xl bg-[#f1f2f6] p-3 md:grid-cols-[1.3fr_0.7fr_auto] md:items-center'>
 						<div className='rounded-2xl bg-white px-4 py-3 md:bg-transparent'>
-							<label className='mb-1 block text-xs text-gray-500'>Where</label>
+							<label
+								htmlFor='venues-search-location'
+								className='mb-1 block text-xs text-gray-500'>
+								Where
+							</label>
+
 							<input
+								id='venues-search-location'
 								type='text'
 								value={localWhere}
 								onChange={event => setLocalWhere(event.target.value)}
@@ -339,8 +345,14 @@ export default function VenuesPage() {
 						</div>
 
 						<div className='rounded-2xl bg-white px-4 py-3 md:bg-transparent'>
-							<label className='mb-1 block text-xs text-gray-500'>Who</label>
+							<label
+								htmlFor='venues-search-guests'
+								className='mb-1 block text-xs text-gray-500'>
+								Who
+							</label>
+
 							<input
+								id='venues-search-guests'
 								type='number'
 								min='1'
 								value={localGuests}

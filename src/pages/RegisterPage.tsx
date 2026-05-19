@@ -119,32 +119,59 @@ export default function RegisterPage() {
 					<form
 						onSubmit={handleRegister}
 						className='mt-5 space-y-4'>
-						<input
-							type='text'
-							placeholder='Name'
-							value={name}
-							onChange={e => setName(e.target.value)}
-							required
-							className='w-full rounded-xl border border-[#d9dbe8] bg-[#f5f5f7] p-3 outline-none transition focus:border-[#1f2a5a]'
-						/>
+						<div>
+							<label
+								htmlFor='register-name'
+								className='mb-2 block text-sm font-medium'>
+								Name
+							</label>
 
-						<input
-							type='email'
-							placeholder='you@stud.noroff.no'
-							value={email}
-							onChange={e => setEmail(e.target.value)}
-							required
-							className='w-full rounded-xl border border-[#d9dbe8] bg-[#f5f5f7] p-3 outline-none transition focus:border-[#1f2a5a]'
-						/>
+							<input
+								id='register-name'
+								type='text'
+								placeholder='Name'
+								value={name}
+								onChange={e => setName(e.target.value)}
+								required
+								className='w-full rounded-xl border border-[#d9dbe8] bg-[#f5f5f7] p-3 outline-none transition focus:border-[#1f2a5a]'
+							/>
+						</div>
 
-						<input
-							type='password'
-							placeholder='Password'
-							value={password}
-							onChange={e => setPassword(e.target.value)}
-							required
-							className='w-full rounded-xl border border-[#d9dbe8] bg-[#f5f5f7] p-3 outline-none transition focus:border-[#1f2a5a]'
-						/>
+						<div>
+							<label
+								htmlFor='register-email'
+								className='mb-2 block text-sm font-medium'>
+								Email
+							</label>
+
+							<input
+								id='register-email'
+								type='email'
+								placeholder='you@stud.noroff.no'
+								value={email}
+								onChange={e => setEmail(e.target.value)}
+								required
+								className='w-full rounded-xl border border-[#d9dbe8] bg-[#f5f5f7] p-3 outline-none transition focus:border-[#1f2a5a]'
+							/>
+						</div>
+
+						<div>
+							<label
+								htmlFor='register-password'
+								className='mb-2 block text-sm font-medium'>
+								Password
+							</label>
+
+							<input
+								id='register-password'
+								type='password'
+								placeholder='Password'
+								value={password}
+								onChange={e => setPassword(e.target.value)}
+								required
+								className='w-full rounded-xl border border-[#d9dbe8] bg-[#f5f5f7] p-3 outline-none transition focus:border-[#1f2a5a]'
+							/>
+						</div>
 
 						<div className='space-y-3 rounded-xl bg-[#f5f5f7] p-4 text-sm'>
 							<label className='flex gap-3'>
