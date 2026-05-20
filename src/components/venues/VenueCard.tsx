@@ -90,6 +90,8 @@ function VenueCard({ venue, badge }: VenueCardProps) {
 					<img
 						src={image}
 						alt={imageAlt}
+						width={400}
+						height={288}
 						loading='lazy'
 						decoding='async'
 						referrerPolicy='no-referrer'

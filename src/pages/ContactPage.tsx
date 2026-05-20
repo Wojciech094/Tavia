@@ -42,7 +42,7 @@ export default function ContactPage() {
 					<div className='mx-auto max-w-6xl'>
 						<p className='mb-4 text-sm font-semibold uppercase tracking-[0.35em] text-[#d8ccff]'>Contact</p>
 
-						<h1 className='max-w-3xl text-4xl font-extrabold tracking-tight md:text-6xl'>
+						<h1 className='max-w-3xl text-4xl font-bold tracking-tight md:text-6xl'>
 							Need help with your stay or venue?
 						</h1>
 

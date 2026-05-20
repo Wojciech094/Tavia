@@ -13,7 +13,7 @@ export default function AboutPage() {
 					<div className='mx-auto max-w-6xl'>
 						<p className='mb-4 text-sm font-semibold uppercase tracking-[0.35em] text-[#d8ccff]'>About Tavia</p>
 
-						<h1 className='max-w-3xl text-4xl font-extrabold tracking-tight md:text-6xl'>
+						<h1 className='max-w-3xl text-4xl font-bold tracking-tight md:text-6xl'>
 							A modern way to discover and manage unique stays.
 						</h1>
 

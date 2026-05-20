@@ -344,7 +344,12 @@ export default function VenueDetailsPage() {
 						{selectedImage ? (
 							<img
 								src={selectedImage}
-								alt={venue.name}
+								alt={venue.media?.find(image => image.url === selectedImage)?.alt || venue.name}
+								width={900}
+								height={520}
+								fetchPriority='high'
+								decoding='async'
+								referrerPolicy='no-referrer'
 								className='h-full w-full object-cover'
 							/>
 						) : (
@@ -354,7 +359,7 @@ export default function VenueDetailsPage() {
 
 					{images.length > 1 && (
 						<div className='mt-3 flex gap-3'>
-							{images.slice(0, 4).map(image => (
+							{images.slice(0, 4).map((image, index) => (
 								<button
 									key={image.url}
 									type='button'
@@ -364,7 +369,12 @@ export default function VenueDetailsPage() {
 									}`}>
 									<img
 										src={image.url}
-										alt={image.alt || venue.name}
+										alt={image.alt || `${venue.name} image ${index + 1}`}
+										width={112}
+										height={80}
+										loading='lazy'
+										decoding='async'
+										referrerPolicy='no-referrer'
 										className='h-full w-full object-cover'
 									/>
 								</button>
@@ -523,8 +533,27 @@ export default function VenueDetailsPage() {
 							type='number'
 							min='1'
 							max={venue.maxGuests}
-							value={guests}
-							onChange={event => setGuests(Number(event.target.value))}
+							value={guests || ''}
+							onChange={event => {
+								const value = event.target.value;
+
+								if (value === '') {
+									setGuests(0);
+									return;
+								}
+
+								setGuests(Number(value));
+							}}
+							onBlur={() => {
+								if (!guests || guests < 1) {
+									setGuests(1);
+									return;
+								}
+
+								if (guests > venue.maxGuests) {
+									setGuests(venue.maxGuests);
+								}
+							}}
 							className='w-full rounded-2xl border border-[#d9dbe8] bg-white px-4 py-3 text-sm font-semibold text-[#1f2a5a] outline-none transition focus:border-[#1f2a5a] focus:ring-4 focus:ring-[#1f2a5a]/10'
 						/>
 					</div>
@@ -553,8 +582,11 @@ export default function VenueDetailsPage() {
 						<span>NOK {total}</span>
 					</div>
 
-					<label className='mt-4 flex gap-3 rounded-xl bg-[#f2efff] p-3 text-sm text-[#1f2a5a]/75'>
+					<label
+						htmlFor='booking-terms'
+						className='mt-4 flex gap-3 rounded-xl bg-[#f2efff] p-3 text-sm text-[#1f2a5a]/75'>
 						<input
+							id='booking-terms'
 							type='checkbox'
 							checked={acceptBookingTerms}
 							onChange={e => setAcceptBookingTerms(e.target.checked)}

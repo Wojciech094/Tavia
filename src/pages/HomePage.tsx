@@ -95,74 +95,76 @@ export default function HomePage() {
 			<Navbar />
 
 			<main>
-				<section className='mx-auto max-w-6xl px-6 py-16 md:px-10 md:py-20'>
-					<div className='max-w-4xl'>
-						<h1 className='mb-6 text-4xl font-bold leading-tight md:text-6xl'>Find your perfect stay.</h1>
+				<section className='bg-[#1f2a5a]'>
+					<div className='mx-auto w-full max-w-6xl px-6 py-16 md:px-10 md:py-20'>
+						<div className='max-w-4xl'>
+							<h1 className='mb-6 text-4xl font-bold leading-tight md:text-6xl'>Find your perfect stay.</h1>
 
-						<p className='mb-6 max-w-2xl text-base text-white/80 md:text-2xl'>
-							Discover handpicked venues for your next escape, across Norway and beyond.
-						</p>
+							<p className='mb-6 max-w-2xl text-base text-white/80 md:text-2xl'>
+								Discover handpicked venues for your next escape, across Norway and beyond.
+							</p>
 
-						<div className='mb-6 inline-flex items-center rounded-full bg-[#d7c6ff] px-4 py-2 text-sm font-medium text-[#1f2a5a]'>
-							Trusted by 40,000+ guests
-						</div>
-
-						<div className='flex flex-col gap-3 rounded-4xl bg-white p-3 text-black shadow-lg md:flex-row md:items-center'>
-							<div className='flex-1 rounded-2xl px-4 py-3'>
-								<label
-									htmlFor='home-search-location'
-									className='mb-1 block text-xs text-gray-500'>
-									Where
-								</label>
-
-								<input
-									id='home-search-location'
-									type='text'
-									value={where}
-									onChange={event => setWhere(event.target.value)}
-									onKeyDown={event => {
-										if (event.key === 'Enter') handleSearch();
-									}}
-									placeholder='Enter location'
-									className='w-full bg-transparent text-sm font-medium outline-none placeholder:text-gray-400'
-								/>
+							<div className='mb-8 inline-flex items-center rounded-full bg-[#d7c6ff] px-4 py-2 text-sm font-medium text-[#1f2a5a]'>
+								Trusted by 40,000+ guests
 							</div>
 
-							<div className='hidden h-10 w-px bg-gray-200 md:block' />
+							<div className='flex w-full max-w-225 flex-col gap-3 rounded-4xl bg-white p-3 text-black shadow-lg md:flex-row md:items-center md:rounded-full md:p-2 md:pl-5'>
+								<div className='flex-1 py-2 md:pr-6'>
+									<label
+										htmlFor='home-search-location'
+										className='mb-1 block text-xs text-gray-500'>
+										Where
+									</label>
 
-							<div className='flex-1 rounded-2xl px-4 py-3'>
-								<label
-									htmlFor='home-search-guests'
-									className='mb-1 block text-xs text-gray-500'>
-									Who
-								</label>
+									<input
+										id='home-search-location'
+										type='text'
+										value={where}
+										onChange={event => setWhere(event.target.value)}
+										onKeyDown={event => {
+											if (event.key === 'Enter') handleSearch();
+										}}
+										placeholder='Enter location'
+										className='w-full bg-transparent text-sm font-medium outline-none placeholder:text-gray-400'
+									/>
+								</div>
 
-								<input
-									id='home-search-guests'
-									type='number'
-									min='1'
-									value={guests}
-									onChange={event => setGuests(event.target.value)}
-									onKeyDown={event => {
-										if (event.key === 'Enter') handleSearch();
-									}}
-									placeholder='Add guests'
-									className='w-full bg-transparent text-sm font-medium outline-none placeholder:text-gray-400'
-								/>
+								<div className='hidden h-10 w-px shrink-0 bg-gray-200 md:block' />
+
+								<div className='flex-1 py-2 md:pl-6 md:pr-6'>
+									<label
+										htmlFor='home-search-guests'
+										className='mb-1 block text-xs text-gray-500'>
+										Who
+									</label>
+
+									<input
+										id='home-search-guests'
+										type='number'
+										min='1'
+										value={guests}
+										onChange={event => setGuests(event.target.value)}
+										onKeyDown={event => {
+											if (event.key === 'Enter') handleSearch();
+										}}
+										placeholder='Add guests'
+										className='w-full bg-transparent text-sm font-medium outline-none placeholder:text-gray-400'
+									/>
+								</div>
+
+								<button
+									type='button'
+									onClick={handleSearch}
+									className='w-full rounded-full bg-[#1f2a5a] px-8 py-3 text-sm font-bold text-white transition hover:bg-[#2f3f7a] md:mr-1 md:w-auto md:shrink-0'>
+									Search
+								</button>
 							</div>
-
-							<button
-								type='button'
-								onClick={handleSearch}
-								className='rounded-full bg-[#1f2a5a] px-8 py-4 text-sm font-bold text-white transition hover:bg-[#2f3f7a]'>
-								Search
-							</button>
 						</div>
 					</div>
 				</section>
 
-				<section className='bg-[#f5f5f7] px-6 py-14 text-black md:px-10'>
-					<div className='mx-auto max-w-6xl'>
+				<section className='bg-[#f5f5f7] py-14 text-black'>
+					<div className='mx-auto w-full max-w-6xl px-6 md:px-10'>
 						<h2 className='text-3xl font-bold text-[#1f2a5a]'>Featured Venues</h2>
 						<p className='mb-8 mt-1 text-gray-600'>Newest places you will love</p>
 
@@ -173,7 +175,7 @@ export default function HomePage() {
 						{!loading && !error && (
 							<div className='grid gap-8 md:grid-cols-2 xl:grid-cols-3'>
 								{featuredVenues.map((venue, index) => {
-									const badge = index === 0 ? 'Trending' : index === 1 ? 'New' : index === 5 ? 'Popular' : '';
+									const badge = index === 0 ? 'New' : index === 1 ? 'Recently added' : '';
 
 									return (
 										<VenueCard

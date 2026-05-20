@@ -55,6 +55,10 @@ function formatCvc(value: string) {
 	return value.replace(/\D/g, '').slice(0, 4);
 }
 
+function formatCardName(value: string) {
+	return value.replace(/[^a-zA-ZæøåÆØÅ\s'-]/g, '');
+}
+
 function CheckoutPage() {
 	const { venueId } = useParams();
 	const navigate = useNavigate();
@@ -113,8 +117,8 @@ function CheckoutPage() {
 		const cleanCardNumber = cardNumber.replace(/\D/g, '');
 		const cleanCvc = cvc.replace(/\D/g, '');
 
-		if (cardName.trim().length < 2) {
-			errors.name = 'Name must be at least 2 characters.';
+		if (!/^[a-zA-ZæøåÆØÅ\s'-]{2,}$/.test(cardName.trim())) {
+			errors.name = 'Name can only contain letters, spaces, hyphens and apostrophes.';
 		}
 
 		if (!/^\d{12,19}$/.test(cleanCardNumber)) {
@@ -261,7 +265,7 @@ function CheckoutPage() {
 									type='text'
 									value={cardName}
 									onChange={e => {
-										setCardName(e.target.value);
+										setCardName(formatCardName(e.target.value));
 										clearFieldError('name');
 									}}
 									placeholder='Test User'

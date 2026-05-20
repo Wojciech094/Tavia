@@ -321,193 +321,240 @@ export default function VenuesPage() {
 		<div className='min-h-screen bg-[#f5f5f7] text-[#1f2a5a]'>
 			<Navbar />
 
-			<div className='border-b bg-white px-6 py-4 md:px-10'>
-				<div className='mx-auto max-w-6xl space-y-4'>
-					<div className='grid gap-3 rounded-4xl bg-[#f1f2f6] p-3 md:grid-cols-[1.3fr_0.7fr_auto] md:items-center'>
-						<div className='rounded-2xl bg-white px-4 py-3 md:bg-transparent'>
-							<label
-								htmlFor='venues-search-location'
-								className='mb-1 block text-xs text-gray-500'>
-								Where
-							</label>
+			<div className='px-6 py-8 md:px-10'>
+				<div className='mx-auto max-w-6xl'>
+					<div className='mb-10 overflow-hidden rounded-[2.25rem] bg-white p-4 shadow-lg shadow-black/5 ring-1 ring-black/5 md:p-6'>
+						<div className='grid gap-3 rounded-4XL bg-[#f1f2f6] p-3 md:grid-cols-[1.3fr_0.7fr_auto] md:items-center md:rounded-full md:p-2 md:pl-5'>
+							<div className='rounded-3XL bg-white px-4 py-3 md:bg-transparent md:py-2 md:pr-6'>
+								<label
+									htmlFor='venues-search-location'
+									className='mb-1 block text-xs text-gray-500'>
+									Where
+								</label>
 
-							<input
-								id='venues-search-location'
-								type='text'
-								value={localWhere}
-								onChange={event => setLocalWhere(event.target.value)}
-								onKeyDown={event => {
-									if (event.key === 'Enter') applySearch();
-								}}
-								placeholder='Search by name, city or country'
-								className='w-full bg-transparent text-sm font-medium outline-none placeholder:text-gray-400'
-							/>
-						</div>
+								<input
+									id='venues-search-location'
+									type='text'
+									value={localWhere}
+									onChange={event => setLocalWhere(event.target.value)}
+									onKeyDown={event => {
+										if (event.key === 'Enter') applySearch();
+									}}
+									placeholder='Search by name, city or country'
+									className='w-full bg-transparent text-sm font-medium outline-none placeholder:text-gray-400'
+								/>
+							</div>
 
-						<div className='rounded-2xl bg-white px-4 py-3 md:bg-transparent'>
-							<label
-								htmlFor='venues-search-guests'
-								className='mb-1 block text-xs text-gray-500'>
-								Who
-							</label>
+							<div className='rounded-3XL bg-white px-4 py-3 md:bg-transparent md:py-2 md:pl-6 md:pr-6 md:border-l md:border-gray-300'>
+								<label
+									htmlFor='venues-search-guests'
+									className='mb-1 block text-xs text-gray-500'>
+									Who
+								</label>
 
-							<input
-								id='venues-search-guests'
-								type='number'
-								min='1'
-								value={localGuests}
-								onChange={event => setLocalGuests(event.target.value)}
-								onKeyDown={event => {
-									if (event.key === 'Enter') applySearch();
-								}}
-								placeholder='Add guests'
-								className='w-full bg-transparent text-sm font-medium outline-none placeholder:text-gray-400'
-							/>
-						</div>
+								<input
+									id='venues-search-guests'
+									type='number'
+									min='1'
+									value={localGuests}
+									onChange={event => setLocalGuests(event.target.value)}
+									onKeyDown={event => {
+										if (event.key === 'Enter') applySearch();
+									}}
+									placeholder='Add guests'
+									className='w-full bg-transparent text-sm font-medium outline-none placeholder:text-gray-400'
+								/>
+							</div>
 
-						<div className='flex gap-2'>
-							<button
-								type='button'
-								onClick={applySearch}
-								disabled={loading}
-								className='rounded-full bg-[#1f2a5a] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60'>
-								{globalSearchLoading ? 'Searching...' : 'Search'}
-							</button>
-
-							<button
-								type='button'
-								onClick={resetFilters}
-								disabled={loading}
-								className='rounded-full border border-[#1f2a5a]/20 bg-white px-6 py-3 text-sm font-semibold text-[#1f2a5a] transition hover:bg-[#f1f2f6] disabled:cursor-not-allowed disabled:opacity-60'>
-								Reset
-							</button>
-						</div>
-					</div>
-
-					<div className='grid gap-3 md:grid-cols-5'>
-						<select
-							value={minPrice}
-							onChange={event => updateParam('minPrice', event.target.value)}
-							disabled={loading}
-							className='rounded-full border bg-white px-4 py-2 text-sm text-gray-600 outline-none disabled:cursor-not-allowed disabled:opacity-60'>
-							<option value=''>Min price</option>
-							<option value='500'>NOK 500+</option>
-							<option value='1000'>NOK 1000+</option>
-							<option value='2000'>NOK 2000+</option>
-						</select>
-
-						<select
-							value={maxPrice}
-							onChange={event => updateParam('maxPrice', event.target.value)}
-							disabled={loading}
-							className='rounded-full border bg-white px-4 py-2 text-sm text-gray-600 outline-none disabled:cursor-not-allowed disabled:opacity-60'>
-							<option value=''>Max price</option>
-							<option value='1000'>Up to NOK 1000</option>
-							<option value='2500'>Up to NOK 2500</option>
-							<option value='5000'>Up to NOK 5000</option>
-						</select>
-
-						<select
-							value={amenity}
-							onChange={event => updateParam('amenity', event.target.value)}
-							disabled={loading}
-							className='rounded-full border bg-white px-4 py-2 text-sm text-gray-600 outline-none disabled:cursor-not-allowed disabled:opacity-60'>
-							<option value=''>Amenities</option>
-							<option value='wifi'>Wifi</option>
-							<option value='parking'>Parking</option>
-							<option value='breakfast'>Breakfast</option>
-							<option value='pets'>Pets</option>
-						</select>
-
-						<select
-							value={minRating}
-							onChange={event => updateParam('minRating', event.target.value)}
-							disabled={loading}
-							className='rounded-full border bg-white px-4 py-2 text-sm text-gray-600 outline-none disabled:cursor-not-allowed disabled:opacity-60'>
-							<option value=''>Rating</option>
-							<option value='3'>3+ rating</option>
-							<option value='4'>4+ rating</option>
-							<option value='4.5'>4.5+ rating</option>
-						</select>
-
-						<select
-							value={sort}
-							onChange={event => updateParam('sort', event.target.value)}
-							disabled={loading}
-							className='rounded-full border bg-white px-4 py-2 text-sm text-gray-600 outline-none disabled:cursor-not-allowed disabled:opacity-60'>
-							<option value=''>Sort by</option>
-							<option value='newest'>Newest</option>
-							<option value='oldest'>Oldest</option>
-							<option value='price-low'>Price: Low to high</option>
-							<option value='price-high'>Price: High to low</option>
-							<option value='rating-high'>Highest rating</option>
-							<option value='guests-high'>Most guests</option>
-						</select>
-					</div>
-
-					<div className='flex flex-col gap-1 text-sm text-gray-600 md:flex-row md:items-center md:justify-between'>
-						<span>{loading ? 'Loading venues...' : `${filteredVenues.length} venues found`}</span>
-
-						{hasSearchFilters ? (
-							<span>{globalSearchLoading ? 'Searching all venues...' : 'Showing results from all API pages'}</span>
-						) : (
-							<span>{hasMore ? 'Scroll to load more venues' : 'All venues loaded'}</span>
-						)}
-					</div>
-				</div>
-			</div>
-
-			<main className='mx-auto max-w-6xl px-6 py-10 md:px-10'>
-				{loading ? (
-					<CardGridSkeleton />
-				) : (
-					<>
-						{filteredVenues.length === 0 ? (
-							<div className='rounded-3xl bg-white p-10 text-center shadow-sm'>
-								<h2 className='text-2xl font-bold'>No venues found</h2>
-								<p className='mt-2 text-gray-500'>Try changing your search or removing some filters.</p>
+							<div className='flex flex-col gap-2 sm:flex-row md:justify-end'>
+								<button
+									type='button'
+									onClick={applySearch}
+									disabled={loading}
+									className='w-full rounded-full bg-[#1f2a5a] px-7 py-3 text-sm font-bold text-white shadow-md shadow-[#1f2a5a]/15 transition hover:bg-[#2f3f7a] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto'>
+									{globalSearchLoading ? 'Searching...' : 'Search'}
+								</button>
 
 								<button
 									type='button'
 									onClick={resetFilters}
-									className='mt-6 rounded-full bg-[#1f2a5a] px-6 py-3 text-sm font-semibold text-white'>
-									Clear filters
+									disabled={loading}
+									className='w-full rounded-full border border-[#1f2a5a]/15 bg-white px-7 py-3 text-sm font-bold text-[#1f2a5a] shadow-sm transition hover:bg-[#f8f8fb] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto'>
+									Reset
 								</button>
 							</div>
-						) : (
-							<div className='grid items-stretch gap-8 md:grid-cols-2 xl:grid-cols-3'>
-								{filteredVenues.map((venue, index) => {
-									const badge = index === 0 ? 'Trending' : index === 1 ? 'New' : index === 5 ? 'Popular' : '';
+						</div>
 
-									return (
-										<VenueCard
-											key={venue.id}
-											venue={venue}
-											badge={badge}
-										/>
-									);
-								})}
+						<div className='mt-5 grid gap-3 md:grid-cols-5'>
+							<div>
+								<label
+									htmlFor='filter-min-price'
+									className='sr-only'>
+									Minimum price
+								</label>
+
+								<select
+									id='filter-min-price'
+									value={minPrice}
+									onChange={event => updateParam('minPrice', event.target.value)}
+									disabled={loading}
+									className='w-full rounded-full border border-[#1f2a5a]/15 bg-white px-4 py-3 text-sm text-gray-600 outline-none transition focus:border-[#1f2a5a] disabled:cursor-not-allowed disabled:opacity-60'>
+									<option value=''>Min price</option>
+									<option value='500'>NOK 500+</option>
+									<option value='1000'>NOK 1000+</option>
+									<option value='2000'>NOK 2000+</option>
+								</select>
 							</div>
-						)}
 
-						{hasMore && !hasSearchFilters && (
-							<div
-								ref={loadMoreRef}
-								className='mt-10 flex min-h-24 items-center justify-center'>
-								{loadingMore && (
-									<div className='rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#1f2a5a] shadow-sm ring-1 ring-black/5'>
-										Loading more venues...
+							<div>
+								<label
+									htmlFor='filter-max-price'
+									className='sr-only'>
+									Maximum price
+								</label>
+
+								<select
+									id='filter-max-price'
+									value={maxPrice}
+									onChange={event => updateParam('maxPrice', event.target.value)}
+									disabled={loading}
+									className='w-full rounded-full border border-[#1f2a5a]/15 bg-white px-4 py-3 text-sm text-gray-600 outline-none transition focus:border-[#1f2a5a] disabled:cursor-not-allowed disabled:opacity-60'>
+									<option value=''>Max price</option>
+									<option value='1000'>Up to NOK 1000</option>
+									<option value='2500'>Up to NOK 2500</option>
+									<option value='5000'>Up to NOK 5000</option>
+								</select>
+							</div>
+
+							<div>
+								<label
+									htmlFor='filter-amenity'
+									className='sr-only'>
+									Amenity
+								</label>
+
+								<select
+									id='filter-amenity'
+									value={amenity}
+									onChange={event => updateParam('amenity', event.target.value)}
+									disabled={loading}
+									className='w-full rounded-full border border-[#1f2a5a]/15 bg-white px-4 py-3 text-sm text-gray-600 outline-none transition focus:border-[#1f2a5a] disabled:cursor-not-allowed disabled:opacity-60'>
+									<option value=''>Amenities</option>
+									<option value='wifi'>Wifi</option>
+									<option value='parking'>Parking</option>
+									<option value='breakfast'>Breakfast</option>
+									<option value='pets'>Pets</option>
+								</select>
+							</div>
+
+							<div>
+								<label
+									htmlFor='filter-rating'
+									className='sr-only'>
+									Minimum rating
+								</label>
+
+								<select
+									id='filter-rating'
+									value={minRating}
+									onChange={event => updateParam('minRating', event.target.value)}
+									disabled={loading}
+									className='w-full rounded-full border border-[#1f2a5a]/15 bg-white px-4 py-3 text-sm text-gray-600 outline-none transition focus:border-[#1f2a5a] disabled:cursor-not-allowed disabled:opacity-60'>
+									<option value=''>Rating</option>
+									<option value='3'>3+ rating</option>
+									<option value='4'>4+ rating</option>
+									<option value='4.5'>4.5+ rating</option>
+								</select>
+							</div>
+
+							<div>
+								<label
+									htmlFor='filter-sort'
+									className='sr-only'>
+									Sort venues
+								</label>
+
+								<select
+									id='filter-sort'
+									value={sort}
+									onChange={event => updateParam('sort', event.target.value)}
+									disabled={loading}
+									className='w-full rounded-full border border-[#1f2a5a]/15 bg-white px-4 py-3 text-sm text-gray-600 outline-none transition focus:border-[#1f2a5a] disabled:cursor-not-allowed disabled:opacity-60'>
+									<option value=''>Sort by</option>
+									<option value='newest'>Newest</option>
+									<option value='oldest'>Oldest</option>
+									<option value='price-low'>Price: Low to high</option>
+									<option value='price-high'>Price: High to low</option>
+									<option value='rating-high'>Highest rating</option>
+									<option value='guests-high'>Most guests</option>
+								</select>
+							</div>
+						</div>
+
+						<div className='mt-5 flex flex-col gap-1 text-sm text-gray-600 md:flex-row md:items-center md:justify-between'>
+							<span>{loading ? 'Loading venues...' : `${filteredVenues.length} venues found`}</span>
+
+							{hasSearchFilters ? (
+								<span>{globalSearchLoading ? 'Searching all venues...' : 'Showing results from all API pages'}</span>
+							) : (
+								<span>{hasMore ? 'Scroll to load more venues' : 'All venues loaded'}</span>
+							)}
+						</div>
+					</div>
+
+					<main>
+						{loading ? (
+							<CardGridSkeleton />
+						) : (
+							<>
+								{filteredVenues.length === 0 ? (
+									<div className='rounded-3xl bg-white p-10 text-center shadow-sm'>
+										<h2 className='text-2xl font-bold'>No venues found</h2>
+										<p className='mt-2 text-gray-500'>Try changing your search or removing some filters.</p>
+
+										<button
+											type='button'
+											onClick={resetFilters}
+											className='mt-6 rounded-full bg-[#1f2a5a] px-6 py-3 text-sm font-semibold text-white'>
+											Clear filters
+										</button>
+									</div>
+								) : (
+									<div className='grid items-stretch gap-8 md:grid-cols-2 xl:grid-cols-3'>
+										{filteredVenues.map((venue, index) => {
+											const badge = index === 0 ? 'Trending' : index === 1 ? 'New' : index === 5 ? 'Popular' : '';
+
+											return (
+												<VenueCard
+													key={venue.id}
+													venue={venue}
+													badge={badge}
+												/>
+											);
+										})}
 									</div>
 								)}
-							</div>
-						)}
 
-						{!hasMore && venues.length > 0 && !hasSearchFilters && (
-							<p className='mt-10 text-center text-sm text-[#1f2a5a]/60'>You have reached the end.</p>
+								{hasMore && !hasSearchFilters && (
+									<div
+										ref={loadMoreRef}
+										className='mt-10 flex min-h-24 items-center justify-center'>
+										{loadingMore && (
+											<div className='rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#1f2a5a] shadow-sm ring-1 ring-black/5'>
+												Loading more venues...
+											</div>
+										)}
+									</div>
+								)}
+
+								{!hasMore && venues.length > 0 && !hasSearchFilters && (
+									<p className='mt-10 text-center text-sm text-[#1f2a5a]/60'>You have reached the end.</p>
+								)}
+							</>
 						)}
-					</>
-				)}
-			</main>
+					</main>
+				</div>
+			</div>
 
 			<Footer />
 		</div>

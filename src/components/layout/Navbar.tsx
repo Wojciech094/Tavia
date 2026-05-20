@@ -52,11 +52,11 @@ export default function Navbar() {
 
 	return (
 		<nav className='sticky top-0 z-50 border-b border-white/10 bg-[#16204a]/90 text-white backdrop-blur-md'>
-			<div className='flex items-center justify-between px-6 py-4 md:px-10'>
+			<div className='relative flex items-center justify-between px-6 py-4 md:px-10'>
 				<Link
 					to='/'
 					onClick={closeMenus}
-					className='flex items-center gap-2'>
+					className='z-10 flex items-center gap-2'>
 					<img
 						src='/logoDark.svg'
 						alt='tavia logo'
@@ -65,7 +65,7 @@ export default function Navbar() {
 					<span className='text-xl font-bold text-white'>Tavia</span>
 				</Link>
 
-				<div className='hidden gap-6 text-sm md:flex'>
+				<div className='absolute left-1/2 hidden -translate-x-1/2 gap-8 text-sm md:flex'>
 					<Link
 						to='/'
 						className='opacity-80 transition hover:opacity-100'>
@@ -85,7 +85,7 @@ export default function Navbar() {
 					</Link>
 				</div>
 
-				<div className='flex items-center gap-3'>
+				<div className='z-10 flex items-center gap-3'>
 					{user ? (
 						<div className='relative'>
 							<button
@@ -94,8 +94,8 @@ export default function Navbar() {
 									setMenuOpen(prev => !prev);
 									setMobileMenuOpen(false);
 								}}
-								className='flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-2 py-2 pr-4 transition hover:bg-white/15'>
-								<div className='h-9 w-9 overflow-hidden rounded-full bg-[#d7c6ff]'>
+								className='flex h-11 items-center gap-3 rounded-full border border-white/15 bg-white/10 px-2 transition hover:bg-white/15 sm:pr-4'>
+								<div className='h-8 w-8 shrink-0 overflow-hidden rounded-full bg-[#d7c6ff] sm:h-9 sm:w-9'>
 									{user.avatar?.url ? (
 										<img
 											src={user.avatar.url}

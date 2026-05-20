@@ -12,6 +12,32 @@ const amenities = [
 	{ key: 'pets', label: 'Pets allowed' },
 ] as const;
 
+interface Booking {
+	id: string;
+	guests: number;
+	dateFrom?: string;
+	dateTo?: string;
+}
+
+interface EditableVenue {
+	name?: string;
+	description?: string;
+	price?: number;
+	maxGuests?: number;
+	media?: { url: string; alt?: string }[];
+	location?: {
+		city?: string;
+		country?: string;
+	};
+	meta?: {
+		wifi?: boolean;
+		parking?: boolean;
+		breakfast?: boolean;
+		pets?: boolean;
+	};
+	bookings?: Booking[];
+}
+
 export default function EditVenuePage() {
 	const { id } = useParams();
 	const navigate = useNavigate();
@@ -30,6 +56,9 @@ export default function EditVenuePage() {
 	});
 
 	const [images, setImages] = useState<string[]>(['']);
+	const [minimumGuestsAllowed, setMinimumGuestsAllowed] = useState(1);
+	const [bookingCount, setBookingCount] = useState(0);
+	const [showPreview, setShowPreview] = useState(false);
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState('');
@@ -40,8 +69,14 @@ export default function EditVenuePage() {
 
 			try {
 				setLoading(true);
+				setError('');
 
-				const venue = await fetchVenueForEdit(id);
+				const venue = (await fetchVenueForEdit(id)) as EditableVenue;
+
+				const highestBookedGuests = Math.max(1, ...(venue.bookings || []).map(booking => Number(booking.guests) || 1));
+
+				setMinimumGuestsAllowed(highestBookedGuests);
+				setBookingCount(venue.bookings?.length || 0);
 
 				setForm({
 					name: venue.name || '',
@@ -56,8 +91,7 @@ export default function EditVenuePage() {
 					pets: Boolean(venue.meta?.pets),
 				});
 
-				const venueImages = venue.media?.map((image: { url: string }) => image.url) || [];
-
+				const venueImages = venue.media?.map(image => image.url) || [];
 				setImages(venueImages.length > 0 ? venueImages : ['']);
 			} catch (err) {
 				setError(err instanceof Error ? err.message : 'Failed to load venue.');
@@ -66,7 +100,7 @@ export default function EditVenuePage() {
 			}
 		}
 
-		loadVenue();
+		void loadVenue();
 	}, [id]);
 
 	function handleChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
@@ -100,13 +134,24 @@ export default function EditVenuePage() {
 		setError('');
 
 		const cleanImages = images.map(image => image.trim()).filter(image => image.length > 0);
+		const requestedMaxGuests = Number(form.maxGuests);
+
+		if (requestedMaxGuests < minimumGuestsAllowed) {
+			setError(
+				`Max guests cannot be lower than ${minimumGuestsAllowed}, because this venue already has booking${
+					bookingCount === 1 ? '' : 's'
+				} with up to ${minimumGuestsAllowed} guest${minimumGuestsAllowed === 1 ? '' : 's'}.`,
+			);
+			setSaving(false);
+			return;
+		}
 
 		try {
 			await updateVenue(id, {
 				name: form.name,
 				description: form.description,
 				price: Number(form.price),
-				maxGuests: Number(form.maxGuests),
+				maxGuests: requestedMaxGuests,
 				media: cleanImages.map((url, index) => ({
 					url,
 					alt: `${form.name} image ${index + 1}`,
@@ -226,12 +271,19 @@ export default function EditVenuePage() {
 									id='edit-venue-max-guests'
 									name='maxGuests'
 									type='number'
-									min='1'
+									min={minimumGuestsAllowed}
 									value={form.maxGuests}
 									onChange={handleChange}
 									required
 									className='w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#1f2a5a] focus:ring-4 focus:ring-[#1f2a5a]/10'
 								/>
+
+								{bookingCount > 0 && (
+									<p className='mt-2 text-xs font-medium text-slate-500'>
+										Cannot be lower than {minimumGuestsAllowed} because this venue already has active booking
+										{bookingCount === 1 ? '' : 's'}.
+									</p>
+								)}
 							</div>
 						</div>
 
@@ -347,30 +399,40 @@ export default function EditVenuePage() {
 						</div>
 
 						<div className='rounded-4xl bg-white p-6 shadow-sm ring-1 ring-black/5'>
-							<h2 className='mb-4 text-xl font-bold'>Image preview</h2>
+							<div className='mb-4 flex items-center justify-between gap-4'>
+								<h2 className='text-xl font-bold'>Image preview</h2>
 
-							{images.some(image => image.trim()) ? (
-								<div className='grid gap-3'>
-									{images
-										.filter(image => image.trim())
-										.map((image, index) => (
-											<div
-												key={`${image}-${index}`}
-												className='overflow-hidden rounded-3xl border border-slate-100 bg-slate-100'>
-												<img
-													src={image}
-													alt={`Preview ${index + 1}`}
-													className='h-56 w-full object-cover'
-													onError={event => {
-														event.currentTarget.style.display = 'none';
-													}}
-												/>
-											</div>
-										))}
+								{images.some(image => image.trim()) && (
+									<button
+										type='button'
+										onClick={() => setShowPreview(prev => !prev)}
+										className='rounded-full bg-[#f2efff] px-4 py-2 text-sm font-semibold text-[#1f2a5a] transition hover:bg-[#e8e0ff]'>
+										{showPreview ? 'Hide preview' : 'Show preview'}
+									</button>
+								)}
+							</div>
+
+							{showPreview && images.some(image => image.trim()) ? (
+								<div className='overflow-hidden rounded-3xl border border-slate-100 bg-slate-100'>
+									<img
+										src={images.find(image => image.trim()) || ''}
+										alt='Venue preview'
+										width={480}
+										height={224}
+										loading='lazy'
+										decoding='async'
+										referrerPolicy='no-referrer'
+										className='h-56 w-full object-cover'
+										onError={event => {
+											event.currentTarget.style.display = 'none';
+										}}
+									/>
 								</div>
 							) : (
-								<div className='flex h-56 items-center justify-center rounded-3xl bg-[#f5f5f7] text-sm text-slate-500'>
-									Image previews will appear here
+								<div className='flex h-56 items-center justify-center rounded-3xl bg-[#f5f5f7] text-center text-sm text-slate-500'>
+									{images.some(image => image.trim())
+										? 'Preview is available when needed.'
+										: 'Image previews will appear here'}
 								</div>
 							)}
 						</div>

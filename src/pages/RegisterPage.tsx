@@ -17,47 +17,57 @@ export default function RegisterPage() {
 	const [acceptPrivacy, setAcceptPrivacy] = useState(false);
 	const [activeModal, setActiveModal] = useState<'terms' | 'privacy' | null>(null);
 
-	async function handleRegister(e: React.FormEvent) {
-		e.preventDefault();
+async function handleRegister(e: React.FormEvent) {
+	e.preventDefault();
 
-		if (!acceptTerms || !acceptPrivacy) {
-			setError('You must accept the Terms and Privacy Policy.');
-			return;
-		}
-
-		if (!email.endsWith('@stud.noroff.no')) {
-			setError('You must use a stud.noroff.no email');
-			return;
-		}
-
-		try {
-			setLoading(true);
-			setError('');
-
-			await registerUser({
-				name,
-				email,
-				password,
-				venueManager: mode === 'manager',
-			});
-
-			const loginData = await loginUser(email, password);
-			const user = loginData.data;
-			const token = loginData.data.accessToken;
-
-			const keyData = await createApiKey(token);
-			const apiKey = keyData.data.key;
-
-			saveAuth(user, token, apiKey);
-
-			navigate('/');
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Registration failed';
-			setError(message);
-		} finally {
-			setLoading(false);
-		}
+	if (!acceptTerms || !acceptPrivacy) {
+		setError('You must accept the Terms and Privacy Policy.');
+		return;
 	}
+
+	const trimmedName = name.trim();
+	const trimmedEmail = email.trim().toLowerCase();
+	const isVenueManager = mode === 'manager';
+
+	if (!trimmedEmail.endsWith('@stud.noroff.no')) {
+		setError('You must use a stud.noroff.no email');
+		return;
+	}
+
+	try {
+		setLoading(true);
+		setError('');
+
+		await registerUser({
+			name: trimmedName,
+			email: trimmedEmail,
+			password,
+			venueManager: isVenueManager,
+		});
+
+		const loginData = await loginUser(trimmedEmail, password);
+		const token = loginData.data.accessToken;
+
+		const keyData = await createApiKey(token);
+		const apiKey = keyData.data.key;
+
+		const user = {
+			...loginData.data,
+			name: loginData.data.name || trimmedName,
+			email: loginData.data.email || trimmedEmail,
+			venueManager: isVenueManager,
+		};
+
+		saveAuth(user, token, apiKey);
+
+		navigate('/');
+	} catch (err) {
+		const message = err instanceof Error ? err.message : 'Registration failed';
+		setError(message);
+	} finally {
+		setLoading(false);
+	}
+}
 
 	return (
 		<div className='min-h-screen bg-[#1f2a5a] text-white'>

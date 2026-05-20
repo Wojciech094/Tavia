@@ -72,7 +72,7 @@ export async function fetchMyVenues() {
 }
 
 export async function fetchVenueForEdit(id: string) {
-	const res = await fetch(`${API_BASE}/holidaze/venues/${id}`, {
+	const res = await fetch(`${API_BASE}/holidaze/venues/${id}?_bookings=true&_owner=true`, {
 		headers: getManagerHeaders(),
 	});
 
