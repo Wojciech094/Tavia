@@ -100,12 +100,14 @@ Full customer and venue manager flows were also tested manually, including regis
 
 ## Links
 
-- Live site:
-- GitHub repository:
-- Figma style guide:
-- Figma prototype:
-- Kanban board:
-- Roadmap:
+- Doc ripo : [https://docs.google.com/document/d/1vT3ZMp2DwFz39gNQzQggCmN9Vh-J__Z9QZsY8XMnPwo/edit?usp=sharing]
+- Live site: [https://taviastay.netlify.app/]
+- GitHub repository: [https://github.com/Wojciech094/Tavia]
+- Figma style guide: [https://www.figma.com/design/Y1Q5N1LmXRXrHsxkdZQEJo/Tavia-FINAL-PROJECT?node-id=0-1&t=eYYhI2EeyZT0fCdx-1]
+- Figma prototype desktop: [https://www.figma.com/proto/Y1Q5N1LmXRXrHsxkdZQEJo/Tavia-FINAL-PROJECT?node-id=1-2606&t=eYYhI2EeyZT0fCdx-1&starting-point-node-id=1%3A2606&show-proto-sidebar=1]
+- Figma prototype mobile: [https://www.figma.com/proto/Y1Q5N1LmXRXrHsxkdZQEJo/Tavia-FINAL-PROJECT?node-id=1-1256&t=eYYhI2EeyZT0fCdx-1]
+- Kanban board: [https://github.com/users/Wojciech094/projects/11]
+- Roadmap: [https://github.com/users/Wojciech094/projects/11/views/4]
 
 ## Author
 
